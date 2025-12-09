@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || "Cold Wallet" %></title>
+  
+  <!-- Page-Specific Stylesheets -->
+  <% if (typeof stylesheets !== 'undefined' && stylesheets && stylesheets.length) { %>
+    <% stylesheets.forEach(function(stylesheet) { %>
+      <link rel="stylesheet" href="<%= stylesheet %>">
+    <% }) %>
+  <% } %>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background: #f5f5f5;
+    }
+    .minimal-header {
+      background: #007bff;
+      color: white;
+      padding: 15px 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .minimal-header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+    .minimal-footer {
+      background: #007bff;
+      color: #95a5a6;
+      text-align: center;
+      padding: 20px;
+      margin-top: 50px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header class="minimal-header">
+    <h1><i class="fas fa-wallet"></i> <%= title || "Cold Wallet" %> - Standalone</h1>
+  </header>
+
+  <main>
+    <%- body %>
+  </main>
+
+  <footer class="minimal-footer">
+    <p>&copy; 2025 Lokblok, Inc. All rights reserved. | Minimal Cold Wallet Server</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "name": "coldwallet",
+  "displayName": "Cold Wallet",
+  "version": "1.0.0",
+  "description": "TSS offline wallet with MPC-TSS threshold signatures",
+  "icon": "fas fa-wallet",
+  "category": "wallet",
+  "enabled": true,
+  "modeSupport": {
+    "personal": true,
+    "business": true
+  },
+  "mainRoute": "/coldwallet",
+  "routeConfig": {
+    "main": "/coldwallet"
+  },
+  "navigation": {
+    "sidebar": {
+      "title": "Cold Wallet",
+      "icon": "fas fa-wallet",
+      "order": 10,
+      "requiresAuth": true,
+      "adminOnly": false
+    },
+    "dashboard": {
+      "title": "Cold Wallet",
+      "subtitle": "Multi-Crypto MPC-TSS Offline Wallet",
+      "description": "Secure Crypto transactions with threshold offline signatures",
+      "icon": "fas fa-wallet",
+      "color": "#f39c12",
+      "order": 20,
+      "requiresAuth": true,
+      "adminOnly": false
+    }
+  },
+  "dependencies": {
+    "external": ["qrious", "qrcodejs"],
+    "internal": ["models/Address", "models/User"]
+  },
+  "environment": {
+    "required": [],
+    "optional": ["TSS_TOKEN_CLIENT_ID", "TSS_ORCHESTRATOR_API_URL", "BLOCKCHAIN_NETWORK"]
+  },
+  "permissions": ["wallet:read", "wallet:send", "wallet:receive"],
+  "migrations": [
+    "migrations/20250917142141-create-address.js",
+    "migrations/20250924142751-add-asset-to-addresses.js",
+    "migrations/20251002093316-add-userid-to-address.js",
+    "migrations/001-add-consumer-wallet-settings.js"
+  ],
+  "assets": {
+    "styles": [],
+    "scripts": ["js/tssparticipant.js"]
+  }
+}
