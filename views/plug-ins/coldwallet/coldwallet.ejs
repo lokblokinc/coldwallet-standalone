@@ -2,303 +2,652 @@
 
 <script type="text/javascript" src="/plug-ins/coldwallet/assets/js/aes.js"></script>
 <script src="/plug-ins/coldwallet/assets/js/qrcode.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-.custom-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  background: transparent !important;
-  background-color: rgba(0,0,0,0.5) !important;
+  /* --- GENERAL STYLES --- */
+  body {
+    font-family: Roboto, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+  }
 
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
+  .container-panel {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
 
-  z-index: 10500;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important; 
-  
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.2s ease;
-}
-
-.custom-modal.hidden {
-  display: none !important;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.custom-modal-content {
-  background: #fff;
-  width: 90%;
-  max-width: 380px;
-  border-radius: 16px;
-
-  box-shadow: none !important;
-  -webkit-box-shadow: none !important;
-  
-  outline: none !important;
-  border: 1px solid #dee2e6;
-
-  padding: 30px;
-  text-align: center;
-  position: relative;
-  margin: auto;
-  animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.close-icon {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: transparent;
-  border: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #999;
-  transition: color 0.2s;
-}
-.close-icon:hover { color: #333; }
-
-#custom-qr-canvas {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  border: 1px solid #eee;
-  padding: 10px;
-  border-radius: 12px;
-  margin: 0 auto 15px auto;
-  box-shadow: none !important;
-}
-
-/* Specific style for scanner box */
-#qr-reader {
+  /* BLUE PANEL */
+  .cw2-blue-panel {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border-radius: 16px;
+    padding: 2.5rem;
+    color: white;
+    box-shadow: 0 8px 32px rgba(0,123,255,.25);
+    margin-bottom: 2rem;
     width: 100%;
-    background: #f8f9fa;
-    border-radius: 8px;
+  }
+
+  .cw2-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+
+  .cw2-panel-title h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .cw2-panel-title p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+    font-weight: 400;
+  }
+
+  .security-badge {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: .9rem;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+  }
+
+  /* INPUTS & SELECTORS STYLE */
+  .cw2-address-selector {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid rgba(255,255,255,.25);
+    border-radius: 12px;
+    background: rgba(255,255,255,.1);
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+  }
+  .cw2-address-selector:focus {
+    outline: none;
+    border-color: rgba(255,255,255,.6);
+    background: rgba(255,255,255,.2);
+    box-shadow: 0 0 0 4px rgba(255,255,255,.1);
+  }
+  .cw2-address-selector option {
+    background-color: #0056b3;
+    color: white;
+    padding: 10px;
+  }
+  .cw2-selector-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    opacity: 0.95;
+    font-size: 1rem;
+    color: white;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+  .btn-light {
+    background: white; color: #0056b3; border: none;
+  }
+  .btn-outline-light {
+    background: transparent; color: white; border: 2px solid rgba(255,255,255,0.6);
+  }
+  .btn-outline-light:hover {
+    background: rgba(255,255,255,0.1); border-color: white; color: white;
+  }
+  
+  /* --- MODAL STYLES (FIXED CENTERING) --- */
+  /* Ensure custom-modal-content behaves like a real modal panel (some modals use .custom-modal-content, not .modal-content) */
+  .custom-modal-content{
+    width: 100%;
+    border-radius: 14px;
+    box-shadow: 0 22px 55px rgba(0,0,0,.28);
+    border: 1px solid rgba(0,0,0,.1);
+    padding: 0;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
     overflow: hidden;
-    margin-bottom: 15px;
-    border: 1px solid #dee2e6;
+    background: #fff;
+  }
+
+  /* Make modal header stretch full width (avoid narrow blue header as in QR modal) */
+  .cw2-modal-header{
+    width: 100%;
+    align-self: stretch;
+    box-sizing: border-box;
+  }
+
+  /* QR modal layout: make content fill the panel neatly */
+  #customQRModal .cw2-modal-body{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+  #custom-qr-canvas{
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  /* Created success block: centered + modest (no Bootstrap alert styling) */
+  #cw2-created-success{
+    text-align: center;
+    margin-top: 1rem;
+  }
+  .cw2-created-banner{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(25,135,84,.35);
+    background: rgba(25,135,84,.06);
+    color: #146c43;
+    font-weight: 700;
+  }
+  .cw2-created-address{
+    margin-top: 14px;
+  }
+  #cw2-new-address.cw2-address-display{
+    display: inline-block;
+    text-align: center;
+    padding: .65rem .85rem !important;
+    border-radius: 10px !important;
+    background: #f8f9fa !important;
+    border: 1px solid rgba(0,0,0,.08);
+    max-width: 100%;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.95rem;
+  }
+
+  .custom-modal:not(.hidden) { display:block; }
+  .custom-modal { background: white !important; outline: none !important; }
+  /* Polished modal container */
+  .custom-modal .modal-content { 
+    border-radius: 14px; 
+    box-shadow: 0 22px 55px rgba(0,0,0,.28); 
+    border: 1px solid rgba(0,0,0,.1);
+    padding:0;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    max-height:90vh;
+    overflow:hidden;
+    background:#fff;
+  }
+  /* Widen wallet modals */
+  #cw2-sendModal .modal-content,
+  #cw2-receive .modal-content,
+  #cw2-tk1 .modal-content,
+  #cw2-tk2 .modal-content,
+  #cw2-success .modal-content { width: min(94vw, 840px); }
+  body.dark-theme .custom-modal .modal-content { 
+    border-color: rgba(255,255,255,.12);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    background-color: #1f1f1f;
+  }
+
+  @keyframes modalPop {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  .cw2-modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #17a2b8 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex; justify-content: space-between; align-self: center;
+  }
+  .cw2-modal-title { font-weight: 700; font-size: 1.2rem; }
+  .cw2-modal-subtitle { font-size: 0.9rem; opacity: 0.9; margin-top: 2px; font-weight: 400; }
+  .cw2-modal-body { padding: 2rem; overflow-y: auto; }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #f8f9fa; }
+
+  .close-icon-white {
+    background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; opacity: 0.8;
+  }
+  .close-icon-white:hover { opacity: 1; }
+
+  /* ASSET SELECTION GRID */
+  .cw2-asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  /* ASSET SELECTION STYLES (Updated) */
+  .cw2-asset-option { 
+    border: 2px solid #eee; 
+    border-radius: 12px; 
+    padding: 1rem; 
+    text-align: center; 
+    cursor: pointer; 
+    transition: all 0.2s ease;
+    background: #fff; /* Ensure white background initially */
+  }
+  
+  .cw2-asset-option:hover { 
+    border-color: #007bff; 
+    background: rgba(0,123,255,.05); 
+  }
+  
+  /* FORZA L'ILLUMINAZIONE QUANDO SELEZIONATO */
+  .cw2-asset-option.selected { 
+    border: 2px solid #007bff !important;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: white !important;
+    box-shadow: 0 0 0 3px rgba(0,123,255,.2), 0 4px 8px rgba(0,0,0,.15) !important;
+    transform: scale(1.02) !important;
+    font-weight: bold !important;
+  }
+  
+  /* I colori delle icone e del testo devono diventare bianchi */
+  .cw2-asset-option.selected .cw2-asset-icon,
+  .cw2-asset-option.selected .cw2-asset-name,
+  .cw2-asset-option.selected .cw2-asset-symbol {
+    color: white !important;
+  }
+
+  /* PROGRESS STEPS */
+  .cw2-creation-progress { margin-top: 0.85rem;
+  margin-bottom: 1.5rem; background: #f8f9fa; padding: 1rem; border-radius: 10px; }
+  .cw2-progress-title { font-weight: 700; margin-bottom: 0.8rem; font-size: 0.95rem; color: #555; }
+  .cw2-steps { display: flex; flex-direction: column; gap: 0.5rem; }
+  .cw2-step { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: #666; }
+  .cw2-step-dot { 
+    width: 12px; height: 12px; border-radius: 50%; background: #dee2e6; transition: all 0.3s ease;
+  }
+  .cw2-step.active { color: #007bff; font-weight: 600; }
+  .cw2-step.active .cw2-step-dot { background: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.2); }
+  .cw2-step.completed { color: #28a745; }
+  .cw2-step.completed .cw2-step-dot { background: #28a745; }
+
+  /* PIN ENTRY (toned down) */
+  .cw2-pin-entry{
+    background: transparent;
+    border: 1px solid rgba(0,0,0,.08);
+    padding: .75rem 1rem;
+    border-radius: 12px;
+    margin-top: .75rem;
+    text-align: center;
+  }
+  .cw2-pin-entry .form-label{
+    font-size: .9rem;
+    color: #666;
+    font-weight: 600;
+    margin-bottom: .35rem;
+  }
+  .cw2-pin-entry input{
+    font-size: 1.05rem;
+    letter-spacing: .25rem;
+    text-align: center;
+    border: 1px solid #ced4da;
+    border-radius: 10px;
+    padding: .4rem .6rem;
+    width: 100%;
+    max-width: 180px;
+    margin: .35rem auto .5rem;
+    display: block;
+  }
+  .cw2-pin-entry input:focus{
+    outline: none;
+    box-shadow: none;
+    border-color: #adb5bd;
+  }
+  .cw2-pin-entry .form-control:focus{ box-shadow: none !important; }
+  #cw2-btn-submit-pin{
+    padding: .35rem .85rem;
+    font-size: .9rem;
+    border-radius: 10px;
+  }
+
+  /* Lock asset selection during creation */
+  .cw2-asset-option.locked{
+    pointer-events: none;
+    opacity: 0.92;
+  }
+
+  /* Make status message more modest */
+  #cw2-status-text{
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    color: #4b5563 !important;
+  }
+  #cw2-creation-status.cw2-status{
+    padding: 8px 10px;
+    margin-bottom: 0.85rem; /* space from progress list */
+  }
+
+  /* UTILS */
+  .d-none { display: none !important; }
+  .cw2-field-group { margin-bottom: 1rem; }
+  .cw2-field-group label { font-weight: 600; display: block; margin-bottom: 0.5rem; }
+  .form-control, .form-select { padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; width: 100%; }
+
+  /* --- STATUS TEXT: remove blue "halo"/glow from Bootstrap alerts --- */
+  #cw2-creation-status.cw2-status{
+  margin-top: 1.5rem;
+  text-align: center;
+  display: block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
 }
 
-@keyframes modalPop {
-  0% { transform: scale(0.9); opacity: 0;
-}
-  100% { transform: scale(1); opacity: 1; }
-}
+#cw2-creation-status.cw2-status-success { border-color: #198754; }
+#cw2-creation-status.cw2-status-error   { border-color: #dc3545; }
+#cw2-creation-status.cw2-status-info    { border-color: #0dcaf0; }
+#cw2-creation-status.cw2-status-neutral { border-color: transparent; }
 
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-.progress-wrap{border:1px solid #dee2e6;border-radius:.5rem;padding:12px;background:#f8f9fa}
-.progress-title{font-weight:600;margin-bottom:.25rem}
-.badge-lg{font-size:1rem;padding:.6em .8em}
-#prompt-area{min-height:64px}
-#prompt-text{margin:0}
-select.form-control.centered { text-align: center; text-align-last: center;
-margin-bottom: 2%; }
-select.form-control.centered option { text-align: center; }
+
+  /* Force modal headers to span the whole panel (fix narrow blue header in QR modal) */
+  .custom-modal .cw2-modal-header{
+    width: 100% !important;
+    align-self: stretch !important;
+  }
+
+
+  /* Scan buttons: modest size + icon spacing */
+  .cw2-scan-btn{
+    padding: 8px 14px;
+    font-size: .95rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* QR Scan modal: make camera area fill the modal nicely */
+  #scanQRModal .cw2-modal-body{
+    padding: 1.25rem 1.5rem;
+  }
+  #qr-reader{
+    width: 100%;
+  }
+  #qr-reader video{
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 12px;
+  }
+  /* html5-qrcode sometimes injects a bordered box */
+  #qr-reader__dashboard_section,
+  #qr-reader__status_span{
+    font-size: .9rem;
+  }
+
 </style>
 
-<main class="container my-4">
-  <header class="mb-3 d-flex justify-content-between align-items-center">
-    <h1 style="margin:0">Cold Wallet</h1>
-    <p style="margin:6px 0 0; opacity:.8; font-size:.95rem">Build a local 2‑of‑3 cold wallet and expose QR requests for balance/transactions</p>
-  </header>
-
-  <div id="panel-create" class="card shadow p-4">
-    
-    <div class="d-flex flex-wrap align-items-center justify-content-between w-100 mb-4">
-      <h2 class="mb-0">Wallet Operations</h2>
-
-      <div class="d-flex align-items-center gap-3">
-        <div>
-            
-            <label for="existing-wallets" class="form-label me-2 mb-0">Select Wallet</label>
-            <select id="existing-wallets" class="form-select" style="width: auto; min-width: 450px;">
-                <option value="" selected>-- Create New --</option>
-            </select>
-        </div>
-
-        <div>
-            <label for="asset-select" class="form-label me-2 mb-0">Asset</label>
-            
-            <select id="asset-select" class="form-select" style="width: auto;
-            min-width: 100px;">
-              <option value="BTC">BTC</option>
-              <option value="ETH" selected>ETH</option>
-              <option value="XRP">XRP</option> 
-            </select>
-        </div>
-      </div>
-    </div>
-
-    <div id="created-address-wrap" class="d-none w-100 mb-3">
-      <div class="text-center">
-        <span class="badge bg-success mb-2">Active Wallet</span>
-      </div>
-      
-       <div class="d-flex justify-content-center align-items-center">
-        <span class="me-2 fw-bold">Address:</span>
-        <code id="created-address" class="mono me-2 fs-5"></code>
-        <button id="btn-copy-addr" class="btn btn-sm btn-outline-secondary" title="Copy to clipboard">
-            📋
-        </button>
-       </div>
-    </div>
-
-    <p id="pin-instruction-text" class="text-muted">
-      You'll be asked to enter a PIN for <strong>each Toughkey</strong>, one by one when asked.
-    </p>
-
-    <div class="row g-4">
-      <div class="col-lg-6 d-flex flex-column justify-content-center">
-        
-        <button id="btn-start-create" class="btn btn-primary btn-lg w-100 mb-3">Create new wallet</button>
-        
-        <button id="btn-show-qr" class="btn btn-outline-dark btn-lg w-100" disabled>
-          Show Address QR
-        </button>
-
-      </div>
-
-      <div class="col-lg-6">
-     
-        <div id="pin-block" class="mt-2 d-none card p-3 bg-light border-warning">
-          <label class="form-label">
-             Enter PIN for <strong id="pin-card-label">Toughkey</strong>
-          </label>
-          <input type="password" id="pin-input" class="form-control" placeholder="••••" inputmode="numeric" maxlength="12" autocomplete="off"/>
-          <button id="btn-submit-pin" class="btn btn-success mt-2 w-100">Continue</button>
-        </div>
-
-        <div id="prompt-area" class="alert alert-secondary mt-3 mb-0 text-center">
-          <p id="prompt-text" class="fw-semibold mb-0">Ready to start.</p>
-        </div>
+<main class="container-panel">
   
-        <div class="progress-wrap mt-3">
-          <div class="progress-title">Group progress</div>
-          <div class="d-flex justify-content-center gap-3 mt-2">
-            <span class="badge badge-lg text-bg-primary">
-                Toughkeys Enrolled: <span id="pe">0</span> / 3
-            </span>
-            <span 
-            class="badge badge-lg text-bg-info">
-                TSS Shares Generated: <span id="pkr">0</span> / 3
-            </span>
+  <div class="cw2-blue-panel">
+    
+    <div class="cw2-panel-header">
+      <div class="cw2-panel-title">
+        <h1>Cold Wallet</h1>
+        <p>Build a local 2‑of‑3 cold wallet and expose QR requests</p>
+      </div>
+      <div class="security-badge-container">
+        <div class="security-badge">
+          <i class="fas fa-shield-alt"></i>
+          <span>MPC-TSS Wallet · 2-of-3 Toughkeys</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cw2-wallet-section" style="margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <div style="width: 100%; max-width: 500px;">
+        <label for="existing-wallets" class="cw2-selector-label">Select Wallet</label>
+        <select id="existing-wallets" class="cw2-address-selector">
+            <option value="" selected>-- Create New --</option>
+        </select>
+      </div>
+    </div>
+
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 2rem 0;">
+
+    <div class="cw2-operations-area" style="text-align: center;">
+        
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem;">
+            <button id="btn-open-create-modal" class="btn btn-light" style="font-weight: 700; color: #0056b3; min-width: 200px;">
+                <i class="fas fa-plus-circle me-2"></i> Create new wallet
+            </button>
+
+            <button id="btn-show-qr" class="btn btn-outline-light" disabled style="min-width: 180px;">
+                <i class="fas fa-qrcode me-2"></i> Show Address QR
+            </button>
+        </div>
+
+        <div id="created-address-wrap" class="d-none" style="margin-top: 1.5rem;">
+          <div style="display: inline-flex; align-items: center; gap: 12px; background: rgba(0, 0, 0, 0.2); padding: 8px 24px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);">
+              <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 600;">ADDRESS</span>
+              <code id="created-address" style="color: white; font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 600;"></code>
+              <button id="btn-copy-addr" class="btn btn-sm text-white p-0" title="Copy"><i class="fas fa-copy"></i></button>
           </div>
         </div>
-      </div>
+
+        <p id="main-prompt-text" style="margin-top: 1rem; opacity: 0.8;">Ready to start.</p>
+
     </div>
-
-    <div class="mt-4 pt-4 border-top">
-      <h4 class="mb-3">Transaction Creation</h4>
-      
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label for="recipient-address" class="form-label">Receiver Address</label>
-          <input type="text" id="recipient-address" class="form-control" placeholder="Enter destination (e.g. 0x...)" autocomplete="off">
-        </div>
-
-        <div class="col-md-2">
-            <button class="btn btn-outline-secondary"
-                type="button"
-                id="btn-scan-recipient"
-                title="Scan QR Address">
-          Import Address 📷
-          </button>
-        </div>
-
-        <div class="col-md-3">
-          <label for="transaction-amount" class="form-label">Amount</label>
-          <input type="number" id="transaction-amount" class="form-control" placeholder="0.00" step="any" min="0" autocomplete="off">
-        </div>
-
-        <div class="col-md-3 align-self-end">
-          <button id="btn-show-tx-qr" class="btn btn-dark w-100" disabled>
-            Show QR
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-4 pt-4 border-top">
-        <h4 class="mb-3">Transaction Signature</h4>
-        <p class="text-muted small">Scan a transaction QR to load the hash, then sign it to generate the result.</p>
-
-        <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-                 <label for="tx-hash-display" class="form-label">Transaction Hash (Ready to Sign)</label>
-                <input type="text" id="tx-hash-display" class="form-control mono" placeholder="Waiting for scan..." readonly style="background-color: #f8f9fa; color: #666;">
-            </div>
-            
-            <div class="col-md-2">
-                <button id="btn-scan-qr" class="btn btn-outline-primary w-100" title="Scan QR with Webcam">
-                  📷 Scan
-                </button>
-             </div>
-
-            <div class="col-md-2">
-                 <label for="signer-select" class="form-label" style="font-size: 0.8rem; margin-bottom: 0.2rem;">Signer</label>
-                 <select id="signer-select" class="form-select">
-                    <option value="" selected disabled>Select Wallet First</option>
-                    </select>
-            </div>
-
-            <div class="col-md-2">
-                <button id="btn-sign-tx" class="btn btn-success w-100" disabled title="Sign and Generate QR">
-                  ✍️ Sign (0/2)
-                 </button>
-            </div>
-        </div>
-     </div>
-
   </div>
+
+  <div class="cw2-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+    <div class="card" style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+      <div style="display: flex; gap: 10px; margin-bottom: 1rem; font-weight: 700; color: #333;">
+        <i class="fas fa-paper-plane" style="color: #007bff;"></i> Transaction Creation
+      </div>
+      <div class="cw2-field-group mb-3">
+          <label>Receiver Address</label>
+          <div style="display: flex; gap: 10px;">
+              <input type="text" id="recipient-address" class="form-control" placeholder="0x...">
+              <button class="btn btn-outline-dark cw2-scan-btn" id="btn-scan-recipient" type="button"><i class="fas fa-camera me-2"></i><span>Scan</span></button>
+          </div>
+      </div>
+      <div class="cw2-field-group">
+          <label>Amount & Generate</label>
+          <div style="display: flex; gap: 10px;">
+              <input type="number" id="transaction-amount" class="form-control" placeholder="0.00">
+              <button id="btn-show-tx-qr" class="btn btn-dark cw2-scan-btn" disabled type="button" style="white-space: nowrap;"><i class="fas fa-qrcode"></i><span>Show QR</span></button>
+          </div>
+      </div>
+    </div>
+
+    <div class="card" style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+      <div style="display: flex; gap: 10px; margin-bottom: 1rem; font-weight: 700; color: #333;">
+        <i class="fas fa-file-signature" style="color: #007bff;"></i> Sign Transaction (2-of-3)
+      </div>
+      <div class="cw2-field-group mb-3">
+          <label>Transaction Hash</label>
+          <div style="display: flex; gap: 10px;">
+              <input type="text" id="tx-hash-display" class="form-control" placeholder="Waiting scan..." readonly>
+              <button id="btn-scan-qr" class="btn btn-outline-primary cw2-scan-btn" type="button"><i class="fas fa-camera me-2"></i><span>Scan</span></button>
+          </div>
+      </div>
+      <div class="cw2-field-group">
+           <label>Signer Device & Action</label>
+           <div style="display: flex; gap: 10px;">
+               <select id="signer-select" class="form-select">
+                  <option value="" selected disabled>Select Wallet First</option>
+              </select>
+              <button id="btn-sign-tx" class="btn btn-success" disabled style="white-space: nowrap;">Sign (0/2)</button>
+           </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
+<div id="cw2-addWallet" class="custom-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cw2-addWalletTitle">
+  <div class="custom-modal-content" style="max-width: 600px;">
+    <div class="cw2-modal-header">
+      <div style="flex: 1; text-align: center;">
+        <div class="cw2-modal-title"><i class="fas fa-plus-circle me-2"></i>Create New Wallet</div>
+        <div class="cw2-modal-subtitle">3 Toughkey HSMs · Threshold Security</div>
+      </div>
+      <button class="close-icon-white" id="btn-close-add-wallet" type="button" aria-label="Close">&times;</button>
+    </div>
+    
+    <div class="cw2-modal-body">
+      
+      <div id="cw2-asset-selection" class="cw2-creation-step">
+        <div class="cw2-field-group">
+          <label style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 1rem;">
+            <i class="fas fa-coins"></i>
+            <span>Select Wallet Type</span>
+          </label>
+          
+          <div class="cw2-asset-grid">
+            <div class="cw2-asset-option" data-asset="BTC">
+              <div class="cw2-asset-icon">₿</div>
+              <div class="cw2-asset-name">Bitcoin</div>
+              <div class="cw2-asset-symbol">BTC</div>
+            </div>
+            <div class="cw2-asset-option" data-asset="ETH">
+              <div class="cw2-asset-icon">Ξ</div>
+              <div class="cw2-asset-name">Ethereum</div>
+              <div class="cw2-asset-symbol">ETH</div>
+            </div>
+            <div class="cw2-asset-option" data-asset="XRP">
+              <div class="cw2-asset-icon">⊕</div>
+              <div class="cw2-asset-name">XRP Ledger</div>
+              <div class="cw2-asset-symbol">XRP</div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="cw2-creation-status" style="margin-top: 1.5rem; text-align: center;">
+          <p id="cw2-status-text" style="font-weight: 600; font-size: 1.1em; margin: 0; color: #0c5460;">
+            Select a wallet type to begin creation
+          </p>
+        </div>
+      </div>
+
+	  <div id="cw2-creation-progress" class="cw2-creation-progress d-none">
+          <div class="cw2-progress-title">Wallet Creation Process</div>
+          <div class="cw2-steps">
+            <div class="cw2-step" id="cw2-step-1"><div class="cw2-step-dot"></div><span>Initialize & fetch device info</span></div>
+            <div class="cw2-step" id="cw2-step-2"><div class="cw2-step-dot"></div><span>Enroll Toughkey 1 (Enter PIN)</span></div>
+            <div class="cw2-step" id="cw2-step-3"><div class="cw2-step-dot"></div><span>Enroll Toughkey 2 (Enter PIN)</span></div>
+            <div class="cw2-step" id="cw2-step-4"><div class="cw2-step-dot"></div><span>Enroll Toughkey 3 (Enter PIN)</span></div>
+            <div class="cw2-step" id="cw2-step-5"><div class="cw2-step-dot"></div><span>TSS Key Shares Created (3/3)</span></div>
+            <div class="cw2-step" id="cw2-step-6"><div class="cw2-step-dot"></div><span>Wallet Created</span></div>
+          </div>
+      </div>
+      
+	  <div id="cw2-progress-summary" class="cw2-progress-summary d-none">
+          <div class="cw2-progress-badges">
+            <span class="badge bg-primary">Enrolled: <span id="cw2-enrolled">0</span> / 3</span>
+            <span class="badge bg-info text-white">Shares: <span id="cw2-shares">0</span> / 3</span>
+          </div>
+      </div>
+
+	  <div id="cw2-pin-section" class="cw2-pin-entry d-none">
+          <label class="form-label">Enter PIN for <strong id="cw2-pin-label">Toughkey 1</strong></label>
+          <input type="password" id="cw2-pin-input" class="form-control" placeholder="••••" inputmode="numeric" maxlength="12" autocomplete="off"/>
+          <button id="cw2-btn-submit-pin" class="btn btn-success mt-2">Continue</button>
+      </div>
+
+	  <div id="cw2-created-success" class="d-none">
+          <div class="cw2-created-banner">
+            <i class="fas fa-check-circle"></i>
+            <span>Wallet Created Successfully!</span>
+          </div>
+          <div class="cw2-created-address">
+            <label>New Wallet Address:</label>
+            <div id="cw2-new-address" class="cw2-address-display"></div>
+          </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-light border" id="btn-cancel-creation">Cancel</button>
+      <button class="btn btn-primary" id="btn-start-ceremony" disabled>Start Creation</button>
+    </div>
+  </div>
+</div>
+
 <div id="customQRModal" class="custom-modal hidden">
-  <div class="custom-modal-content">
-    <button class="close-icon" id="btn-close-custom-qr">&times;</button>
-    
-    <h4 id="qr-modal-title" class="mb-4 fw-bold">Wallet QR</h4>
-    
-    <canvas id="custom-qr-canvas" width="250" height="250"></canvas>
-    
-    <p id="qr-modal-desc" class="text-muted small mt-3 mb-4">
-      Scan with your mobile app
-    </p>
-    
-    <button class="btn btn-outline-secondary w-100 py-2" id="btn-close-custom-qr-2">Close</button>
+  <div class="custom-modal-content" style="max-width: 100%; text-align: center;">
+    <div class="cw2-modal-header">
+        <div class="cw2-modal-title" id="cw2-custom-qr-title">Wallet QR</div>
+        <button class="close-icon-white" id="btn-close-custom-qr">&times;</button>
+    </div>
+    <div class="cw2-modal-body">
+        <canvas id="custom-qr-canvas" width="250" height="250"></canvas>
+        <button class="btn btn-light border w-100 mt-3" id="btn-close-custom-qr-2">Close</button>
+    </div>
   </div>
 </div>
 
 <div id="scanQRModal" class="custom-modal hidden">
-    <div class="custom-modal-content" style="max-width: 500px;">
- 
-      <button class="close-icon" id="btn-close-scan">&times;</button>
-      
-      <h4 class="mb-3 fw-bold">Scan QR</h4>
-      
-      <div id="qr-reader"></div>
-      
-      <p class="text-muted small mt-3 mb-0">
-        Point your camera at the QR code
-      </p>
+    <div class="custom-modal-content" style="max-width: 100%; text-align: center;">
+      <div class="cw2-modal-header">
+        <div class="cw2-modal-title">Scan QR</div>
+        <button class="close-icon-white" id="btn-close-scan">&times;</button>
+      </div>
+      <div class="cw2-modal-body">
+         <div id="qr-reader"></div>
+         <p class="text-muted small mt-2 text-center">Point camera at QR code</p>
+      </div>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<script src="/plug-ins/coldwallet/assets/js/tssparticipant.js"></script>
 
+<div id="cw2SignPinModal" class="custom-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cw2SignPinTitle">
+  <div class="custom-modal-content" style="max-width: 100%;">
+    <div class="cw2-modal-header">
+      <div class="cw2-modal-title" id="cw2SignPinTitle">Enter PIN</div>
+      <button class="close-icon-white" id="btn-close-sign-pin" aria-label="Close">&times;</button>
+    </div>
+    <div class="cw2-modal-body" style="text-align:left;">
+      <div class="text-muted small mb-2" id="cw2SignPinLabel">Device</div>
+      <input id="cw2-sign-pin-input" type="password" class="form-control" autocomplete="off" inputmode="numeric" placeholder="PIN" />
+      <div class="d-flex gap-2 mt-3">
+        <button id="btn-cancel-sign-pin" type="button" class="btn btn-outline-secondary w-50">Cancel</button>
+        <button id="btn-submit-sign-pin" type="button" class="btn btn-primary w-50">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/plug-ins/coldwallet/assets/js/tssparticipant.js"></script>
 <script>
-  // Environment vars
   window.CW_ENV = {
     WS_CARD_1: "<%= (process.env.WS_CARD_1 || 'ws://localhost:8001/ws') %>",
     WS_CARD_2: "<%= (process.env.WS_CARD_2 || 'ws://localhost:8002/ws') %>",
@@ -306,668 +655,222 @@ select.form-control.centered option { text-align: center; }
     WS_MANAGER: "<%= (process.env.WS_MANAGER || 'wss://tsskeymanager-sdk.azurewebsites.net/ws') %>"
   };
 </script>
+<script>
+  // Compatibility: some legacy code expects a global cw2_handleDecodedText
+  // (e.g. inside /js/coldwallet.js). Provide a safe default.
+  window.cw2_handleDecodedText = window.cw2_handleDecodedText || function(decodedText, targetInputId){
+    try{
+      const el = document.getElementById(targetInputId);
+      if(el){
+        el.value = (decodedText || '').trim();
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }catch(e){}
+  };
+</script>
 <script src="/js/coldwallet.js"></script>
 
 <script type="module">
+/* -----------------------------------------------------------
+   JAVASCRIPT LOGIC ADAPTED FOR NEW MODAL FLOW
+   ----------------------------------------------------------- */
 
-let TSSAddress;
-let messageToSign, rawTransaction;
-let currentSessionId = null; // API Session ID
+let selectedAsset = null;
+let wallet = { address: null, partyId: null, participants: [], token: null };
+let cachedParties = [];
+let pendingPinResolve = null; 
 
-// State for multi-signature management
-let currentSignatures = new Set(); 
+const createModal = document.getElementById('cw2-addWallet');
+const btnOpenCreate = document.getElementById('btn-open-create-modal');
+const btnCloseCreate = document.getElementById('btn-close-add-wallet');
+const btnCancelCreate = document.getElementById('btn-cancel-creation');
+const btnStartCeremony = document.getElementById('btn-start-ceremony');
 
-async function sendStatusWithTimeout(apiManager, params, timeoutMs = 90000) {
-  try {
-    console.log(`[Status] Requesting enrollment status with ${timeoutMs/1000}s timeout...`);
-    const result = await apiManager._sendAndWait('Info_Enrollment', params, 'ENROLLMENT_STATUS', timeoutMs);
-    console.log(`[Status] Received enrollment status:`, result);
-    return result;
-  } catch (error) 
-  {
-    console.error(`[Status] Error during enrollment status request:`, error);
-    if (error.message.includes('timeout waiting for ENROLLMENT_STATUS')) {
-      console.log(`[Status] Enrollment process taking longer than ${timeoutMs/1000} seconds`);
+function updateCreateButtonState() {
+    const walletSelect = document.getElementById('existing-wallets');
+    // Enable "Create new wallet" only when "-- Create New --" (empty value) is selected
+    const isCreateNew = !walletSelect || !walletSelect.value;
+    if (btnOpenCreate) btnOpenCreate.disabled = !isCreateNew;
+}
+
+
+if (btnOpenCreate) btnOpenCreate.addEventListener('click', () => {
+    resetCreationModal();
+    if (createModal) createModal.classList.remove('hidden');
+});
+
+function closeCreationModal() {
+    if (createModal) createModal.classList.add('hidden');
+}
+if (btnCloseCreate) btnCloseCreate.addEventListener('click', closeCreationModal);
+if (btnCancelCreate) btnCancelCreate.addEventListener('click', closeCreationModal);
+
+function resetCreationModal() {
+    selectedAsset = null;
+    
+    // 1. Rimuovi selezione visiva
+    document.querySelectorAll('.cw2-asset-option').forEach(el => { el.classList.remove('selected'); el.classList.remove('locked'); });
+    
+    // 2. Reset visibilità sezioni
+    const elAssetSel = document.getElementById('cw2-asset-selection');
+    const elProcess = document.getElementById('cw2-creation-progress');
+    const elSuccess = document.getElementById('cw2-created-success');
+    const elStatus = document.getElementById('cw2-creation-status');
+
+    if(elAssetSel) elAssetSel.classList.remove('d-none');
+    if(elProcess) elProcess.classList.add('d-none');
+    if(elSuccess) elSuccess.classList.add('d-none');
+    
+    // 3. Reset Messaggio (Neutro, senza sfondo verde/blu)
+    if(elStatus) elStatus.classList.remove('d-none');
+    cw2_setStatusMessage('Select a wallet type to begin creation', 'neutral');
+
+    // 4. Reset Bottone
+    if(btnStartCeremony) {
+        btnStartCeremony.disabled = true;
+        btnStartCeremony.textContent = "Start Creation";
+        btnStartCeremony.classList.remove('d-none'); 
     }
-    throw error;
+    
+    if(btnCancelCreate) {
+        btnCancelCreate.textContent = "Cancel";
+        btnCancelCreate.disabled = false;
+    }
+    
+    for(let i=1; i<=6; i++) setStep(i, '');
+    updateStats(0, 0);
+}
+
+// GESTORE CLICK ASSET (Logica ConsumerWallet2)
+const assetOptions = document.querySelectorAll('.cw2-asset-option');
+assetOptions.forEach(opt => {
+    opt.addEventListener('click', () => {
+        // 1. Rimuovi 'selected' da tutti gli altri
+        assetOptions.forEach(el => el.classList.remove('selected'));
+        
+        // 2. Aggiungi 'selected' a quello cliccato
+        opt.classList.add('selected');
+        
+        // 3. Aggiorna variabile globale
+        selectedAsset = opt.getAttribute('data-asset');
+        
+        // 4. Aggiorna Stato: Testo + Sfondo Verde
+        cw2_setStatusMessage(`${selectedAsset} wallet selected. Ready to create.`, 'success');
+        
+        // 5. Abilita bottone
+        if(btnStartCeremony) btnStartCeremony.disabled = false;
+    });
+});
+
+if (btnStartCeremony) btnStartCeremony.addEventListener('click', () => {
+    if (!selectedAsset) return;
+
+    // Keep the asset options visible; show progress under them
+    document.getElementById('cw2-creation-progress').classList.remove('d-none');
+    document.getElementById('cw2-creation-progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('cw2-creation-status').classList.remove('d-none');
+
+    // Lock asset selection to avoid changing mid-ceremony
+    document.querySelectorAll('.cw2-asset-option').forEach(el => el.classList.add('locked'));
+
+    btnStartCeremony.disabled = true;
+    btnStartCeremony.textContent = "Creating...";
+    btnCancelCreate.disabled = true;
+    startWalletCreation();
+});
+
+function setStep(num, status) {
+    const step = document.getElementById(`cw2-step-${num}`);
+    if(!step) return;
+    step.classList.remove('active', 'completed');
+    if(status) step.classList.add(status);
+}
+
+function updateStats(enrolled, shares) {
+    document.getElementById('cw2-enrolled').textContent = enrolled;
+    document.getElementById('cw2-shares').textContent = shares;
+}
+
+function setModalStatus(text) {
+    document.getElementById('cw2-status-text').textContent = text;
+}
+
+function cw2_setStatusMessage(message, type = 'neutral') {
+  const statusElement = document.getElementById('cw2-status-text');
+  const statusContainer = document.getElementById('cw2-creation-status');
+
+  if (statusElement) statusElement.textContent = message;
+
+  if (statusContainer) {
+    // NON usare più alert/alert-*
+    statusContainer.classList.remove(
+      'alert', 'alert-success', 'alert-danger', 'alert-info',
+      'cw2-status-success', 'cw2-status-error', 'cw2-status-info', 'cw2-status-neutral'
+    );
+
+    // base class tua (opzionale ma consigliata)
+    statusContainer.classList.add('cw2-status');
+
+    if (type === 'success') statusContainer.classList.add('cw2-status-success');
+    else if (type === 'error') statusContainer.classList.add('cw2-status-error');
+    else if (type === 'info') statusContainer.classList.add('cw2-status-info');
+    else statusContainer.classList.add('cw2-status-neutral');
   }
 }
 
-let wallet = { address: 'mw6hpfazea7tCcnDLuiH4CWZ8sf8z6nfXs', partyId: null, participants: [], token: null, balance: '0', pins: [] };
-let partyId = '';
-let cachedParties = []; // Global cache for loaded wallets
+const pinSection = document.getElementById('cw2-pin-section');
+const pinInput = document.getElementById('cw2-pin-input');
+const pinLabel = document.getElementById('cw2-pin-label');
+const btnSubmitPin = document.getElementById('cw2-btn-submit-pin');
 
-let pendingPinResolve, pendingPinResolveSign;
-let successReceived = false;
-/*************** ENCRYPTION AND PIN HELPERS ***************/
-function encryptUsingAES(plainText) {
-    const keyBytes = aesjs.utils.utf8.toBytes('4512631236589784');
-    const ivBytes = aesjs.utils.utf8.toBytes('4512631236589784');
-    const textBytes = aesjs.utils.utf8.toBytes(plainText);
-    const padded = aesjs.padding.pkcs7.pad(textBytes.slice());
-    const aesCbc = new aesjs.ModeOfOperation.cbc(keyBytes, ivBytes);
-    const encryptedBytes = aesCbc.encrypt(padded);
-    return bytesToBase64(encryptedBytes);
-}
+if (btnSubmitPin) btnSubmitPin.addEventListener('click', submitPin);
+if (pinInput) pinInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') submitPin(); });
 
-function bytesToBase64(bytes) {
-    let bin = '';
-    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-    return btoa(bin);
-}
-
-/*************** UI HELPERS ***************/
-const $ = (sel) => document.querySelector(sel);
-
-const peEl  = document.getElementById('pe');
-const pkrEl = document.getElementById('pkr');
-let countersLocked = false;
-const updatePE  = (n, { force = false } = {}) => {
-  if (countersLocked && !force) return;
-  peEl.textContent = String(n);
-};
-const updatePKR = (n, { force = false } = {}) => {
-  if (countersLocked && !force) return;
-  pkrEl.textContent = String(n);
-};
-
-const createdAddressWrap = document.getElementById('created-address-wrap');
-const createdAddressEl   = document.getElementById('created-address');
-function showCreatedAddress(addr) {
-  createdAddressEl.textContent = addr || '(unknown)';
-  createdAddressWrap.classList.remove('d-none');
-}
-
-// Single prompt API
-const promptText = document.getElementById('prompt-text');
-let promptLocked = false;
-
-function setPrompt(text, { force = false } = {}) {
-  // If we want to force update (e.g., during signing), ignore lock
-  if (promptLocked && !force) return;
-  if(promptText) promptText.textContent = text || '';
-}
-
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-// Create flow button states
-const btnStartCreate = document.getElementById('btn-start-create');
-const btnShowQr = document.getElementById('btn-show-qr');
-const btnShowTxQr = document.getElementById('btn-show-tx-qr');
-const btnSignTx = document.getElementById('btn-sign-tx');
-const BTN_TEXT_IDLE = 'Create new wallet';
-const BTN_TEXT_INPROGRESS = 'Wallet creation in progress...';
-const BTN_TEXT_FINALIZING = 'Wallet Creation Complete';
-const BTN_TEXT_COMPLETE = 'Wallet Created';
-
-let successHandled = false;            
-const holds = new Set();
-function updateCreateButton() {
-    if (holds.size > 0) {
-      btnStartCreate.disabled = true;
-      btnStartCreate.textContent = successReceived ? BTN_TEXT_FINALIZING : BTN_TEXT_INPROGRESS;
-      return;
-    }
-    if (successReceived) {
-      btnStartCreate.disabled = true;
-      btnStartCreate.textContent = BTN_TEXT_COMPLETE;
-      btnShowQr.disabled = false;
-      if(btnShowTxQr) btnShowTxQr.disabled = false;
-    } else {
-      btnStartCreate.disabled = true;
-      btnStartCreate.textContent = BTN_TEXT_INPROGRESS;
-    }
-}
-
-function holdButton(reason) {
-    holds.add(reason);
-    updateCreateButton();
-}
-
-function releaseButton(reason) {
-    holds.delete(reason);
-    updateCreateButton();
-}
-
-if(btnStartCreate) btnStartCreate.addEventListener('click', startWalletCreation);
-const customModal = document.getElementById('customQRModal');
-const btnClose1 = document.getElementById('btn-close-custom-qr');
-const btnClose2 = document.getElementById('btn-close-custom-qr-2');
-
-function openCustomModal() {
-    customModal.classList.remove('hidden');
-}
-function closeCustomModal() {
-    customModal.classList.add('hidden');
-}
-
-if(btnClose1) btnClose1.addEventListener('click', closeCustomModal);
-if(btnClose2) btnClose2.addEventListener('click', closeCustomModal);
-if(customModal) {
-    customModal.addEventListener('click', (e) => {
-        if (e.target === customModal) closeCustomModal();
+function askPin(cardName) {
+    pinSection.classList.remove('d-none');
+    pinLabel.textContent = cardName;
+    pinInput.value = '';
+    pinInput.focus();
+    return new Promise((resolve) => {
+        pendingPinResolve = resolve;
     });
-}
-
-// Helper to render QR
-function renderQrInModal(payloadJson, title="Wallet QR", desc="Scan with your mobile app") {
-    openCustomModal();
-    const titleEl = document.getElementById('qr-modal-title');
-    const descEl = document.getElementById('qr-modal-desc');
-    if(titleEl) titleEl.textContent = title;
-    if(descEl) descEl.textContent = desc;
-
-    const canvas = document.getElementById('custom-qr-canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    new QRious({
-        element: canvas,
-        value: typeof payloadJson === 'string' ? payloadJson : JSON.stringify(payloadJson), 
-        size: 250,
-        level: 'H',
-        backgroundAlpha: 1,
-        foreground: '#000'
-    });
-}
-
-if(btnShowQr) {
-    btnShowQr.addEventListener('click', () => {
-        if (!wallet.address) { alert("No address generated."); return; }
-        const currentAsset = document.getElementById('asset-select')?.value || 'ETH';
-        console.log(currentAsset);
-        renderQrInModal({
-            address: wallet.address,
-            crypto: currentAsset,
-            action: "balance"
-        }, 
-        "Wallet Address QR");
-    });
-}
-
-if(btnShowTxQr) {
-    btnShowTxQr.addEventListener('click', () => {
-        const currentAddress = wallet.address;
-        const recipient = document.getElementById('recipient-address')?.value.trim();
-        const amount = document.getElementById('transaction-amount')?.value.trim();
-        const currentAsset = document.getElementById('asset-select')?.value || 'ETH';
-
-        if (!currentAddress || !recipient || !amount) {
-            alert("Please fill all fields (Address, Recipient, Amount).");
-            return;
-        }
-
-        renderQrInModal({
-            address: currentAddress,
-            to: recipient,
-            amount: amount,
-            crypto: currentAsset,
-            action: "transaction"
-         }, "Transaction Request QR", "Scan this with the online app to prepare the transaction");
-    });
-}
-
-// Helper to populate Signer select with Members loaded from cache
-// MODIFIED: Uses "Toughkey 1/2/3" based on index
-function updateSignerDropdown() {
-    const signerSelect = document.getElementById('signer-select');
-    if(!signerSelect) return;
-    
-    signerSelect.innerHTML = '<option value="" selected disabled>Select TK</option>';
-    
-    // Participants are populated when selecting the wallet (from API 'members' field)
-    if (wallet.participants && wallet.participants.length > 0) {
-        wallet.participants.forEach((p, index) => {
-            const opt = document.createElement('option');
-            // p.id corresponds to real partyMemberID (GUID)
-            opt.value = p.id; 
-           
-             // FORCED LABEL: Toughkey 1, Toughkey 2, etc.
-            opt.textContent = `Toughkey ${index + 1}`;
-            signerSelect.appendChild(opt);
-        });
-    }
-}
-
-// ============================================
-// SIGNATURE AND QR GENERATION LOGIC (MULTI-PARTY)
-// ============================================
-if(btnSignTx) {
-    btnSignTx.addEventListener('click', async () => {
-        if (!messageToSign) {
-            setPrompt("⚠️ Error: No message to sign. Please Scan QR first.", { force: true });
-            return;
-        }
-        
-        if (!currentSessionId) {
-             setPrompt("⚠️ Error: Session ID missing. Please rescan QR.", { force: true });
-             return;
-        }
-
-        // If quorum already reached
-        if (currentSignatures.size >= 2) {
-             setPrompt("✅ Transaction already fully signed!", { force: true });
-             return;
-       
-         }
-
-        // 1. Get ID from dropdown instead of prompt
-        const signerSelect = document.getElementById('signer-select');
-        const keyId = signerSelect.value; // This is now the member GUID
-        const signerText = signerSelect.options[signerSelect.selectedIndex].text;
-        // 2. Validate Dropdown Input
-        if (!keyId || keyId === "") {
-            setPrompt("⚠️ Please select a Signer from the dropdown list.", { force: true });
-            return;
-        }
-
-        // 3. Duplicate check
-        if (currentSignatures.has(keyId)) {
-            setPrompt(`⚠️ ${signerText} has already signed! Please select a different device.`, { force: true });
-            return;
-        }
-
-        // 4. PIN REQUEST
-        setPrompt(`Please insert the PIN for ${signerText}`);
-        const pin = await askPin(signerText); // Await user input
-        
-        if (!pin) {
-            setPrompt("Operation cancelled (No PIN entered).", { force: true });
-            return;
-        }
-        
-        // 5. Encrypt PIN
-        const encryptedPin = encryptUsingAES(pin);
-        // 6. UI Loading state
-        const originalText = btnSignTx.innerHTML;
-        btnSignTx.disabled = true;
-        btnSignTx.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing...`;
-        
-        setPrompt(`⏳ Tap your ${signerText} to sign...`, { force: true });
-        try {
-            // ---------------------------------------------------------
-            // SIGNATURE API CALL (Signature/sign)
-            // ---------------------------------------------------------
-            // Here we pass the real partyMemberID (GUID)
-            const signSessionPayload = {
-                sessionID: currentSessionId,
-                partyMemberID: keyId, 
-                pin: encryptedPin
-            };
-            console.log("Sending SignSession Request:", signSessionPayload);
-
-            const signRes = await fetch('https://localhost:44379/api/Signature/sign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signSessionPayload)
-            });
-            if (!signRes.ok) {
-                 const errData = await signRes.json().catch(()=>({}));
-                 throw new Error(errData.message || `API Error ${signRes.status}`);
-            }
-            const signData = await signRes.json();
-            console.log("Sign API Success:", signData);
-
-            // Add to signers
-            currentSignatures.add(keyId);
-            const count = currentSignatures.size;
-
-            if (count < 2) {
-                // PARTIAL
-                setPrompt(`✅ Signed with ${signerText}. One more signature needed.`, { force: true });
-                btnSignTx.innerHTML = `✍️ Sign (${count}/2)`;
-            } else {
-                // COMPLETED (2 of 3)
-                const signature = signData.resultObject;
-                console.log("Threshold reached. TSS Signing Completed.");
-                
-                const currentAsset = document.getElementById('asset-select').value;
-
-                // Final payload to show in QR
-                const signedPayload = {
-                    action: "sign",
-                    rawTransaction: rawTransaction,
-                    signedInput: signature,
-                    crypto: currentAsset
-                };
-                renderQrInModal(
-                    signedPayload, 
-                    "Signature Generated", 
-                    "Threshold met (2/3). Scan this QR to broadcast."
-                );
-                // Update button to final state
-                btnSignTx.innerHTML = `✅ Show Result QR`;
-                btnSignTx.classList.remove('btn-success');
-                btnSignTx.classList.add('btn-primary');
-                
-                setPrompt("🎉 Threshold reached! Transaction fully signed.", { force: true });
-                btnSignTx.onclick = () => {
-                     renderQrInModal(signedPayload, "Signature Generated", "Scan this QR to broadcast.");
-                };
-            }
-
-        } catch (e) {
-            console.error("Signing error:", e);
-            setPrompt(`❌ Error during signing: ${e.message}`, { force: true });
-            btnSignTx.innerHTML = originalText;
-        } finally {
-            btnSignTx.disabled = false;
-            // If not finished, restore text with correct count
-            if (currentSignatures.size < 2) {
-                 btnSignTx.innerHTML = `✍️ Sign (${currentSignatures.size}/2)`;
-            }
-        }
-    });
-}
-
-// ============================================
-// QR SCANNER LOGIC (WEBCAM)
-// ============================================
-const btnScanQr = document.getElementById('btn-scan-qr');
-const btnScanRecipient = document.getElementById('btn-scan-recipient'); // NEW
-const scanModal = document.getElementById('scanQRModal');
-const btnCloseScan = document.getElementById('btn-close-scan');
-let html5QrCode = null;
-
-// NEW: Scanning State
-// 'TX' = Scanning a transaction to sign (JSON)
-// 'ADDR' = Scanning a recipient address (String)
-let activeScanMode = 'TX'; 
-
-async function startQrScanner() {
-    if (!scanModal) return;
-    scanModal.classList.remove('hidden');
-    if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
-    const config = { fps: 10 };
-    console.log("Avvio scanner mode:", activeScanMode);
-    try {
-        await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
-        console.log("Camera avviata (environment)");
-    } catch (err) {
-        console.warn("Environment camera fallita, provo user...", err);
-        try {
-             await html5QrCode.start({ facingMode: "user" }, config, onScanSuccess, onScanFailure);
-             console.log("Camera avviata (user)");
-        } catch(e2) {
-             console.error("Errore fatale camera:", e2);
-             alert("Impossibile avviare la fotocamera. Verifica di essere in HTTPS o su localhost.");
-             closeScanModal();
-        }
-    }
-}
-
-async function closeScanModal() {
-    if (html5QrCode && html5QrCode.isScanning) {
-        try { await html5QrCode.stop();
-        } catch (e) { console.error(e); }
-    }
-    scanModal.classList.add('hidden');
-}
-
-async function onScanSuccess(decodedText, decodedResult) {
-    console.log("--- QR LETTO ---");
-    console.log(decodedText);
-
-    // 🔹 Caso 1: stai scansionando un ADDRESS
-    if (activeScanMode === 'ADDR') {
-        let cleanAddr = decodedText.trim();
-
-        // supporto per formati tipo "ethereum:0x123..." o "bitcoin:1ABC..."
-        const lower = cleanAddr.toLowerCase();
-        if (lower.startsWith('ethereum:') || lower.startsWith('bitcoin:')) {
-            cleanAddr = cleanAddr.split(':')[1];
-        }
-        // rimuove eventuali query tipo "?amount=..."
-        if (cleanAddr.includes('?')) {
-            cleanAddr = cleanAddr.split('?')[0];
-        }
-
-        const recipientInput = document.getElementById('recipient-address');
-        if (recipientInput) {
-            recipientInput.value = cleanAddr;
-            // piccolo feedback visivo
-            recipientInput.style.backgroundColor = "#d4edda";
-            setTimeout(() => {
-                recipientInput.style.backgroundColor = "";
-            }, 1000);
-        }
-
-        await closeScanModal();
-        setPrompt("Address loaded from QR.", { force: true });
-        return;
-    }
-
-    // 🔹 Caso 2: modalità standard (TX da firmare)
-    try {
-        const data = JSON.parse(decodedText);
-        console.log("JSON parsato:", data);
-
-        // CASE A: Transaction Data (RawTx + Hash)
-        if (data.rawTxBytes && data.messagesToSign) {
-            console.log("Riconosciuto come Transazione TSS");
-            if(!partyId) {
-                setPrompt("⚠️ Error: No Wallet selected. Please select a wallet.", { force: true });
-                await closeScanModal();
-                return;
-            }
-
-            // RESET SIGNATURE STATE
-            currentSignatures.clear();
-            currentSessionId = null; // Reset session
-
-            if(btnSignTx) {
-                btnSignTx.disabled = false;
-                btnSignTx.innerHTML = `✍️ Sign (0/2)`;
-                btnSignTx.classList.remove('btn-primary', 'animate__pulse');
-                btnSignTx.classList.add('btn-success');
-                btnSignTx.onclick = null;
-            }
-
-            rawTransaction = data.rawTxBytes;
-            if (Array.isArray(data.messagesToSign) && data.messagesToSign.length > 0) {
-                const msgItem = data.messagesToSign[0];
-                if (typeof innerData === 'string') {
-                    try { innerData = JSON.parse(innerData); } catch (e) {}
-                }
-                console.log(msgItem);
-                messageToSign = msgItem?.Data ||
-                                msgItem?.data;
-                console.log("Hash estratto:", messageToSign);
-            } else {
-                console.warn("Invalid messagesToSign");
-            }
-            
-            const hashDisplay = document.getElementById('tx-hash-display');
-            if(hashDisplay) {
-                hashDisplay.value = messageToSign;
-                hashDisplay.style.backgroundColor = "#d4edda";
-                hashDisplay.style.color = "#155724";
-                setTimeout(()=>{
-                    hashDisplay.style.backgroundColor = "#f8f9fa";
-                    hashDisplay.style.color = "#666";
-                }, 1500);
-            }
-
-            setPrompt("⏳ Initializing Signing Session...", { force: true });
-
-            try {
-                const createPayload = { partyGUID: partyId, messageToSign: messageToSign };
-                console.log("Calling Signature/create:", createPayload);
-                
-                const createRes = await fetch('https://localhost:44379/api/Signature/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(createPayload)
-                });
-                if(!createRes.ok) throw new Error("Failed to init session");
-                const createData = await createRes.json();
-                currentSessionId = createData.resultObject;
-                console.log("Session ID obtained:", currentSessionId);
-                
-                setPrompt("Session Ready. Select a device and click 'Sign' (2 required).", { force: true });
-                if(btnSignTx) {
-                    btnSignTx.disabled = false;
-                    btnSignTx.classList.add('animate__animated', 'animate__pulse');
-                }
-
-            } catch(apiErr) {
-                console.error(apiErr);
-                setPrompt("❌ Error initializing signing session.", { force: true });
-            }
-
-            await closeScanModal();
-            return;
-        }
-
-        // CASE B: Recipient Address JSON { "address": "..." } (legacy)
-        const recipientInput = document.getElementById('recipient-address');
-        if (recipientInput && data.address) {
-            recipientInput.value = data.address;
-            setPrompt("Address loaded: " + data.address, { force: true });
-            await closeScanModal();
-            return;
-        }
-        
-        // CASE C: JSON ma non riconosciuto
-        setPrompt("Unrecognized QR Format (JSON).", { force: true });
-        await closeScanModal();
-    } catch (e) {
-        console.warn("Errore parsing JSON o testo semplice:", e);
-        setPrompt("Unrecognized QR (Text).", { force: true });
-        await closeScanModal();
-    }
-}
-
-
-function onScanFailure(error) { 
-    // console.warn(error);
-}
-
-// Main Scan Button (Transaction Hash)
-if (btnScanQr) {
-    btnScanQr.addEventListener('click', () => {
-        activeScanMode = 'TX';
-        startQrScanner();
-    });
-}
-
-// New Scan Button (Recipient Address)
-if (btnScanRecipient) {
-  btnScanRecipient.addEventListener('click', () => {
-    activeScanMode = 'ADDR';
-    startQrScanner();
-  });
-}
-
-if (btnCloseScan) btnCloseScan.addEventListener('click', closeScanModal);
-if (scanModal) {
-    scanModal.addEventListener('click', (e) => {
-        if (e.target === scanModal) closeScanModal();
-    });
-}
-
-// ============================================
-// COPY TO CLIPBOARD LOGIC
-// ============================================
-const btnCopyAddr = document.getElementById('btn-copy-addr');
-if (btnCopyAddr) {
-    btnCopyAddr.addEventListener('click', () => {
-        const addrText = document.getElementById('created-address').textContent;
-        if (!addrText) return;
-
-        navigator.clipboard.writeText(addrText).then(() => {
-            // Visual Feedback
-            const originalHTML = btnCopyAddr.innerHTML;
-            btnCopyAddr.innerHTML = '✅';
-            setTimeout(() => {
-                btnCopyAddr.innerHTML = originalHTML;
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-            setPrompt('❌ Failed to copy to clipboard.');
-        });
-    });
-}
-
-
-// ============================================
-// PIN LOGIC 
-// ============================================
-const pinBlock = document.getElementById('pin-block');
-const pinLabel = document.getElementById('pin-card-label');
-const pinInput = document.getElementById('pin-input');
-if(document.getElementById('btn-submit-pin'))
-    document.getElementById('btn-submit-pin').addEventListener('click', submitPin);
-if(pinInput)
-    pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPin(); });
-function showPin(show, cardLabel='') {
-  if(pinBlock) pinBlock.classList.toggle('d-none', !show);
-  if(pinLabel) pinLabel.textContent = cardLabel || '';
-  if (show && pinInput) setTimeout(() => pinInput.focus(), 0);
-}
-
-// Function to ask for PIN returning a Promise
-function askPin(cardLabel) {
-  showPin(true, cardLabel);
-  return new Promise((resolve) => { 
-      pendingPinResolve = (val) => { 
-          resolve(val); 
-          pendingPinResolve = null; 
-      }; 
-  });
 }
 
 function submitPin() {
-  const val = pinInput.value.trim();
-  if (!val) return;
-  pinInput.value = '';
-  showPin(false);
-  if (pendingPinResolve) pendingPinResolve(val);
+    const val = pinInput.value.trim();
+    if(!val) return; 
+    pinSection.classList.add('d-none');
+    pinInput.value = '';
+    if(pendingPinResolve) {
+        pendingPinResolve(val);
+        pendingPinResolve = null;
+    }
 }
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-let maxPE = 0;
-let maxPKR = 0;
-let reachedGroupReady = false;
-// ============================================
-// MODIFIED CORE CREATION FLOW
-// ============================================
 async function startWalletCreation() {
   try {
-    promptLocked = false;
-    btnStartCreate.disabled = true;
-    btnStartCreate.textContent = BTN_TEXT_INPROGRESS;
-    btnShowQr.disabled = true;
-    if(btnShowTxQr) btnShowTxQr.disabled = true;
+    updateStats(0,0);
     
-    successHandled = false;
-    holds.clear();
-    updateCreateButton();
-    successReceived = false;
-    countersLocked = false;
-    reachedGroupReady = false;
+    setStep(1, 'active');
+    setModalStatus("Initializing Party on Server...");
     
-    maxPE = 0; maxPKR = 0; updatePE(0); updatePKR(0);
-    setPrompt('');
-    const selectedAsset = (document.getElementById('asset-select')?.value || 'BTC').toUpperCase();
-    
-    // 1. CREATE PARTY
     const createPartyData = {
       assets: [selectedAsset],
       size: 3,
       threshold: 2,
       thresholdConfig: []
     };
-    const createPartyJson = JSON.stringify(createPartyData);
-    console.log(createPartyJson);
-    const createPartyres = await fetch( 'https://localhost:44379/api/Party/create', {
+    
+    const createPartyres = await fetch('https://localhost:44379/api/Party/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: createPartyJson
-      });
+        body: JSON.stringify(createPartyData)
+    });
     const partyData = await createPartyres.json();
-    partyId = partyData.resultObject[0];
-    console.log("Party ID:", partyId);
-    // 2. ADD MEMBERS
+    const partyId = partyData.resultObject[0];
+    
     const AddMembersToPartyData = {
       partyID: partyId,
       members: [
@@ -976,296 +879,689 @@ async function startWalletCreation() {
         { externalPartyMemberID: "toughkey3-member", level: 0, name: "Toughkey 3", label: "Toughkey 3" }
       ]
     };
-    const AddMembersJson = JSON.stringify(AddMembersToPartyData);
-    const AddMembersRes = await fetch( "https://localhost:44379" + '/api/Party/addMembers', {
+    
+    const AddMembersRes = await fetch("https://localhost:44379" + '/api/Party/addMembers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: AddMembersJson
+      body: JSON.stringify(AddMembersToPartyData)
     });
     const AddMembersData = await AddMembersRes.json();
-    console.log("Members Added:", AddMembersData);
-
     const members = AddMembersData.resultObject;
-    // *** FIX: SAVE MEMBERS IN GLOBAL STATE ***
     wallet.participants = members;
-    updateSignerDropdown();
-    // Update UI
+    
+    setStep(1, 'completed');
 
-    // Object to store encrypted PINs and reuse them in Save loop
-    let memberCredentials = {};
-    // =====================================================
-    // 3. AUTHORIZATION LOOP (Authorize)
-    // =====================================================
     let enrolledCount = 0;
-    // LOCAL ENROLLMENT COUNTER
-    for (const member of members) {
-        const memberId = member.id;
-        const memberName = member.name || "Unknown Device";
-        console.log(`Starting authorization for member ${memberId} (${memberName})`);
-        // A. Ask for PIN
-        setPrompt(`Please insert the PIN for your ${memberName}`);
-        const pin = await askPin(memberName);
+    let memberCredentials = {}; 
+
+    for (let i = 0; i < members.length; i++) {
+        const member = members[i];
+        const stepNum = i + 2; 
+        setStep(stepNum, 'active');
         
-        // B. Encrypt PIN
+        const pin = await askPin(member.name);
+        
         const encryptedPin = encryptUsingAES(pin);
-        // Save encrypted PIN for next loop (Save)
-        memberCredentials[memberId] = encryptedPin;
-        // C. Prompt TAP
-        setPrompt(`Tap your ${memberName} to authorize creation`);
-        // D. Authorize API call
-        const authBody = JSON.stringify({ participantId: memberId, pin: encryptedPin, SerialNumbersToExclude: [] });
+        memberCredentials[member.id] = encryptedPin; 
+        
+        setModalStatus(`Tap ${member.name} to authorize...`);
+        
+        const authBody = JSON.stringify({ participantId: member.id, pin: encryptedPin, SerialNumbersToExclude: [] });
         const authRes = await fetch(`https://localhost:44379/api/Party/authorize`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: authBody
         });
-        if (!authRes.ok) throw new Error(`Authorization failed for ${memberName}: ${authRes.status}`);
+        if (!authRes.ok) throw new Error(`Auth failed for ${member.name}`);
         
-        console.log(`Authorization successful for ${memberName}`);
-        // *** UPDATE ENROLLED COUNTER ***
         enrolledCount++;
-        updatePE(enrolledCount);
-        // E. Remove and Wait
-        setPrompt(`Remove your ${memberName} and wait`);
-        await sleep(4000);
+        updateStats(enrolledCount, 0);
+        setStep(stepNum, 'completed');
+        
+        setModalStatus(`Remove ${member.name} and wait...`);
+        await sleep(3000);
     }
 
-    // =====================================================
-    // *** REQUESTED MOCK INTERLUDE ***
-    // =====================================================
-    setPrompt("We are starting the wallet creation... Please wait.");
-    await sleep(3500); // Wait 3.5 seconds
-    // =====================================================
-
-
-    // =====================================================
-    // 4. START ACTIVATION (Intermediate)
-    // =====================================================
-    console.log("Calling Start Activation...");
-    const startActivationData = { partyID: partyId };
-    const StartActivationJson = JSON.stringify(startActivationData);
-    const StartActivationRes = await fetch( "https://localhost:44379" + '/api/Activation/start', {
+    setStep(5, 'active');
+    setModalStatus("Starting Activation...");
+    
+    await fetch("https://localhost:44379" + '/api/Activation/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: StartActivationJson
+      body: JSON.stringify({ partyID: partyId })
     });
-    // We don't fetch the address yet, as requested
-    const StartActivationResData = await StartActivationRes.json();
-    console.log("Start Activation Result (Intermediate):", StartActivationResData);
 
-    // =====================================================
-    // 5. SHARE SAVE LOOP (Save)
-    // =====================================================
     let sharesCount = 0;
-    // LOCAL SHARES COUNTER
     for (const member of members) {
-        const memberId = member.id;
-        const memberName = member.name || "Unknown Device";
+        setModalStatus(`Tap ${member.name} to save share...`);
         
-        // Retrieve previously saved encrypted PIN
-        const reusedEncryptedPin = memberCredentials[memberId];
-        console.log(`Starting Save Share for member ${memberId}`);
-
-        // A. Prompt TAP for saving
-        setPrompt(`Tap your ${memberName} to save the private share`);
-        // B. Save API call (using same input as authorize)
+        const reusedEncryptedPin = memberCredentials[member.id];
+        
         const saveBody = JSON.stringify({ 
             partyId: partyId,
-            participantId: memberId, 
+            participantId: member.id, 
             pin: reusedEncryptedPin, 
             SerialNumbersToExclude: [] 
         });
-        // Fetch simulates waiting for card tap
+        
         const saveRes = await fetch(`https://localhost:44379/api/Party/save`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: saveBody
         });
-        if (!saveRes.ok) throw new Error(`Save Share failed for ${memberName}: ${saveRes.status}`);
-        console.log(`Save Share successful for ${memberName}`);
-        // *** UPDATE SHARES COUNTER ***
+        if (!saveRes.ok) throw new Error(`Save share failed for ${member.name}`);
+        
         sharesCount++;
-        updatePKR(sharesCount);
-        // C. Remove and Wait
-        setPrompt(`Remove your ${memberName} and wait`);
-        await sleep(4000);
+        updateStats(enrolledCount, sharesCount);
+        setModalStatus(`Remove ${member.name}...`);
+        await sleep(2000);
     }
+    
+    setStep(5, 'completed');
 
-    // =====================================================
-    // 6. END ACTIVATION (Final)
-    // =====================================================
-    console.log("Calling End Activation...");
-    const EndActivationRes = await fetch( "https://localhost:44379" + '/api/Activation/end', {
+    setStep(6, 'active');
+    setModalStatus("Finalizing Wallet...");
+    
+    const EndActivationRes = await fetch("https://localhost:44379" + '/api/Activation/end', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ partyID: partyId }) 
     });
-    const EndActivationResData = await EndActivationRes.json();
-    console.log("End Activation Result (Final):", EndActivationResData);
-    // SUCCESS - Retrieve final address
-    const finalAddr = EndActivationResData.resultObject.address;
-    wallet.address = finalAddr;
-    // --- UI UPDATE ---
-    const walletSelect = document.getElementById('existing-wallets');
-    if(walletSelect) {
-        const newOpt = document.createElement('option');
-        newOpt.value = finalAddr;
-        newOpt.textContent = `${finalAddr} (${selectedAsset})`;
-        newOpt.dataset.asset = selectedAsset;
-        newOpt.dataset.partyId = partyId;
-        newOpt.dataset.fullAddress = finalAddr;
-        newOpt.selected = true;
-        walletSelect.appendChild(newOpt);
-    }
+    const EndResData = await EndActivationRes.json();
+    const finalAddr = EndResData.resultObject.address;
     
-    setPrompt('The address of the wallet is ' + finalAddr);
-    showCreatedAddress(finalAddr);
-    successReceived = true; 
-    updateCreateButton();
+    setStep(6, 'completed');
+    
+    document.getElementById('cw2-created-success').classList.remove('d-none');
+    document.getElementById('cw2-new-address').textContent = finalAddr;
+    document.getElementById('cw2-status-text').classList.add('d-none');
+    
+    btnCancelCreate.textContent = "Close";
+    btnCancelCreate.disabled = false;
+    btnStartCeremony.classList.add('d-none');
 
-  } catch (e) {
-    console.error('[Create] Error:', e);
-    setPrompt("Error: " + e.message);
-    successReceived = false;
-    btnStartCreate.disabled = false;
-    btnStartCreate.textContent = BTN_TEXT_IDLE;
-    btnShowQr.disabled = true;
-    if(btnShowTxQr) btnShowTxQr.disabled = true;
+    
+    // Make the freshly created address the active one in the blue selector,
+    // and disable "Create new wallet" unless "-- Create New --" is selected.
+    const fallbackParty = { partyAddress: finalAddr, assetCode: selectedAsset, id: partyId, members: members };
+    await loadExistingWallets(finalAddr, fallbackParty);
+} catch (e) {
+    console.error(e);
+    setModalStatus("Error: " + e.message);
+    btnStartCeremony.disabled = false;
+    btnStartCeremony.textContent = "Retry";
+    btnCancelCreate.disabled = false;
   }
 }
 
-// ============================================================
-// EXISTING WALLET LIST LOGIC (CACHE + SELECT FIX)
-// ============================================================
+function updateMainInterface(address, asset) {
+    const addrWrap = document.getElementById('created-address-wrap');
+    const addrCode = document.getElementById('created-address');
+    const mainPrompt = document.getElementById('main-prompt-text');
+    
+    addrCode.textContent = address;
+    addrWrap.classList.remove('d-none');
+    mainPrompt.textContent = `Active Wallet: ${asset}`;
+    
+    document.getElementById('btn-show-qr').disabled = false;
+    // TX QR should activate only when recipient + amount are valid
+    updateTxQrButtonState();
+    
+    wallet.address = address;
+    wallet.crypto = asset;
+}
 
-const walletSelect = document.getElementById('existing-wallets');
-// 1. Function to load wallets on startup
-async function loadExistingWallets() {
+function encryptUsingAES(plainText) {
+    const keyBytes = aesjs.utils.utf8.toBytes('4512631236589784');
+    const ivBytes = aesjs.utils.utf8.toBytes('4512631236589784');
+    const textBytes = aesjs.utils.utf8.toBytes(plainText);
+    const padded = aesjs.padding.pkcs7.pad(textBytes.slice());
+    const aesCbc = new aesjs.ModeOfOperation.cbc(keyBytes, ivBytes);
+    return bytesToBase64(aesCbc.encrypt(padded));
+}
+function bytesToBase64(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+}
+
+async function loadExistingWallets(selectAddress = null, fallbackParty = null) {
     try {
-        console.log("[Init] Fetching existing wallets...");
-        // API call for wallet list
         const res = await fetch('https://localhost:44379/api/Party');
-        if (!res.ok) throw new Error(`API Error: ${res.status}`);
-        
         const data = await res.json();
-        // *** FIX: SAVE DATA IN CACHE ***
         cachedParties = data.resultObject || [];
-        console.log("Parties loaded:", cachedParties);
 
-        if(walletSelect) {
-            walletSelect.innerHTML = '<option value="">-- Create New --</option>';
-            cachedParties.forEach(p => {
-                const addr = p.partyAddress; 
-                const partyIdVal = p.id || p.partyGUID;
-                const asset = p.assetCode;
-
-                if (addr) {
-                    
-                    const opt = document.createElement('option');
-                    opt.value = addr;
-                    opt.textContent = `${addr} (${asset})`; 
-                    // Save ID in dataset, retrieve the rest from cache
-  
-                    opt.dataset.partyId = partyIdVal;
-                    walletSelect.appendChild(opt);
-                }
-            });
-            walletSelect.value = "";
-            if (btnStartCreate) {
-                btnStartCreate.textContent = "Create new wallet";
-                btnStartCreate.disabled = false;
-            }
-            
-            if (createdAddressWrap) createdAddressWrap.classList.add('d-none');
-            setPrompt("Ready to create a new wallet.");
+        // If API doesn't yet return the freshly created wallet, keep a fallback
+        if (fallbackParty && fallbackParty.partyAddress) {
+            const exists = cachedParties.some(p => p.partyAddress === fallbackParty.partyAddress);
+            if (!exists) cachedParties.push(fallbackParty);
         }
 
-    } catch (e) {
-        console.error("[Init] Error loading wallets:", e);
+        const select = document.getElementById('existing-wallets');
+        select.innerHTML = '<option value="">-- Create New --</option>';
+
+        cachedParties.forEach(p => {
+            if (p.partyAddress) {
+                const opt = document.createElement('option');
+                opt.value = p.partyAddress;
+                opt.textContent = `${p.partyAddress} (${p.assetCode})`;
+                opt.dataset.partyId = p.id || p.partyGUID;
+                opt.dataset.asset = p.assetCode;
+                select.appendChild(opt);
+            }
+        });
+
+        if (selectAddress) {
+            select.value = selectAddress;
+            // Force UI refresh
+            select.dispatchEvent(new Event('change'));
+        } else {
+            select.value = '';
+            updateCreateButtonState();
+        }
+    } catch (e) { 
+        console.error("Error loading wallets", e); 
+        updateCreateButtonState();
     }
 }
 
-// 2. Event Listener for selection change
-if (walletSelect) {
-    walletSelect.addEventListener('change', (e) => {
-        const selectedOption = walletSelect.selectedOptions[0];
-        const val = selectedOption.value;
-        const infoText = document.getElementById('pin-instruction-text'); // Reference to text
+document.getElementById('existing-wallets')?.addEventListener('change', (e) => {
+    const val = e.target.value;
 
-        if (val) {
-            // EXISTING WALLET SELECTED
-            // HIDE INFO TEXT
-        
-             if(infoText) infoText.classList.add('d-none'); 
+    if (val) {
+        const opt = e.target.selectedOptions[0];
+        const pid = opt.dataset.partyId;
+        const asset = opt.dataset.asset;
 
-            const pid = selectedOption.dataset.partyId;
-            
-          
-            // *** FIX: SEARCH CACHE TO GET ALL DATA (MEMBERS INCLUDED) ***
-            const partyData = cachedParties.find(p => (p.id == pid || p.partyGUID == pid));
 
-          
-            if (partyData) {
-                wallet.address = partyData.partyAddress;
-                partyId = partyData.id || partyData.partyGUID;
-          
-                
-                // *** CRITICAL FIX: POPULATE WALLET PARTICIPANTS USING REAL RESPONSE DATA ***
-    
-                wallet.participants = partyData.members || partyData.partyMembers || [];
-                const asset = partyData.assetCode || 'ETH';
-          
-                 updateSignerDropdown(); // Update signer select with new members
-
-                 // *** UPDATE: SET COUNTERS TO MAX (Existing Wallet) ***
-                 updatePE(3);
-                 updatePKR(3);
-
-                showCreatedAddress(wallet.address);
-                // UI Updates
-                const assetDropdown = document.getElementById('asset-select');
-                if (assetDropdown && asset && asset !== 'UNKNOWN') {
-                    assetDropdown.value = asset;
-                }
-
-                if (btnShowQr) btnShowQr.disabled = false;
-                if (btnShowTxQr) btnShowTxQr.disabled = false;
-                if (btnStartCreate) {
-                    btnStartCreate.textContent = "Wallet Selected";
-                    btnStartCreate.disabled = true;
-                }
-
-                console.log("Wallet Loaded via Cache:", wallet);
-                setPrompt(`Wallet loaded: ${asset} - Members loaded: ${wallet.participants.length}`);
-            }
-
-        } else {
-            // "-- Create New --" OPTION SELECTED
-            // SHOW INFO TEXT
-            if(infoText) infoText.classList.remove('d-none');
-            if (btnStartCreate) {
-                btnStartCreate.textContent = "Create new wallet";
-                btnStartCreate.disabled = false;
-            }
-            createdAddressWrap.classList.add('d-none');
-            wallet.address = null;
-            wallet.participants = []; // Reset
+        wallet.partyId = pid || null;
+        wallet.crypto = asset || null;
+        const partyData = cachedParties.find(p => (p.id == pid || p.partyGUID == pid));
+        if (partyData) {
+            wallet.participants = partyData.members || partyData.partyMembers || [];
             updateSignerDropdown();
-            // Reset dropdown
-            
-            // *** RESET COUNTERS ***
-            updatePE(0);
-            updatePKR(0);
-
-            partyId = null;
-            if (btnShowQr) btnShowQr.disabled = true;
-            if (btnShowTxQr) btnShowTxQr.disabled = true;
-            
-            setPrompt("Ready to create a new wallet.");
         }
+
+        updateMainInterface(val, asset);
+    } else {
+        document.getElementById('created-address-wrap').classList.add('d-none');
+        document.getElementById('btn-show-qr').disabled = true;
+        document.getElementById('btn-show-tx-qr').disabled = true;
+        document.getElementById('main-prompt-text').textContent = "Ready to start.";
+        wallet.address = null;
+        wallet.partyId = null;
+        wallet.crypto = null;
+        wallet.participants = [];
+        updateSignerDropdown();
+    }
+
+    // Enable "Create new wallet" only when "-- Create New --" is selected
+    updateCreateButtonState();
+});
+
+function updateSignerDropdown() {
+    const s = document.getElementById('signer-select');
+    s.innerHTML = '<option value="" selected disabled>Select TK</option>';
+    if(wallet.participants) {
+        wallet.participants.forEach((p, idx) => {
+            const o = document.createElement('option');
+            o.value = p.id;
+            o.textContent = `Toughkey ${idx+1}`;
+            s.appendChild(o);
+        });
+    }
+}
+
+loadExistingWallets();
+
+const qrModal = document.getElementById('customQRModal');
+const btnShowQr = document.getElementById('btn-show-qr');
+const btnCloseQr1 = document.getElementById('btn-close-custom-qr');
+const btnCloseQr2 = document.getElementById('btn-close-custom-qr-2');
+const qrModalTitle = document.getElementById('cw2-custom-qr-title');
+
+if(btnShowQr) {
+    btnShowQr.addEventListener('click', () => {
+        if(wallet.address) renderQR(wallet.address, 'Wallet QR');
     });
 }
 
-// Load list on page startup
-loadExistingWallets();
+// Transaction Creation - Receiver Address must be editable (manual + scan)
+// and "Show QR" becomes active only when we have a valid recipient + amount.
+const recipientInput = document.getElementById('recipient-address');
+const amountInput = document.getElementById('transaction-amount');
+const btnShowTxQr = document.getElementById('btn-show-tx-qr');
+
+function updateTxQrButtonState() {
+    const hasWallet = !!wallet.address;
+    const recipient = (recipientInput?.value || '').trim();
+    const amountStr = (amountInput?.value || '').trim();
+    const amountNum = Number(amountStr);
+
+    const isValid = hasWallet && recipient.length > 0 && amountStr.length > 0 && !Number.isNaN(amountNum) && amountNum > 0;
+    if (btnShowTxQr) btnShowTxQr.disabled = !isValid;
+}
+
+if (recipientInput) {
+    recipientInput.removeAttribute('readonly');
+    recipientInput.disabled = false;
+    recipientInput.addEventListener('input', updateTxQrButtonState);
+}
+
+if (amountInput) {
+    amountInput.addEventListener('input', updateTxQrButtonState);
+}
+
+if (btnShowTxQr) {
+    btnShowTxQr.addEventListener('click', () => {
+        if (!wallet.address) return;
+
+        const recipient = (recipientInput?.value || '').trim();
+        const amount = (amountInput?.value || '').trim();
+        const amountNum = Number(amount);
+
+        if (!recipient || !amount || Number.isNaN(amountNum) || amountNum <= 0) return;
+
+        // Payload expected by the mobile app (Transaction Creation QR)
+        // {
+        //   address: "<sender>",
+        //   to: "<receiver>",
+        //   amount: "<decimal string>",
+        //   crypto: "BTC|ETH|XRP",
+        //   action: "transaction"
+        // }
+        const txPayload = JSON.stringify({
+            address: wallet.address,
+            to: recipient,
+            amount: amount,
+            crypto: (wallet.crypto || selectedAsset || '').toString(),
+            action: "transaction"
+        });
+
+        renderQR(txPayload, 'Prepare Transaction QR');
+    });
+}
+
+// Set initial state
+updateTxQrButtonState();
+
+
+if(btnCloseQr1) btnCloseQr1.addEventListener('click', () => qrModal.classList.add('hidden'));
+if(btnCloseQr2) btnCloseQr2.addEventListener('click', () => qrModal.classList.add('hidden'));
+
+function renderQR(txt, title = 'Wallet QR') {
+    if (qrModalTitle) qrModalTitle.textContent = title;
+    if (qrModal) qrModal.classList.remove('hidden');
+    const canvas = document.getElementById('custom-qr-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 250, 250);
+        new QRious({ element: canvas, value: txt, size: 250 });
+    }
+}
+
+
+// -----------------------------------------------------------
+
+// ============================================================
+// SIGN TRANSACTION (2-of-3) — restored scan+enable behavior
+// ============================================================
+let messageToSign = null;
+let rawTransaction = null;
+let currentSessionId = null;
+let currentSignatures = new Set();
+
+const btnSignTx = document.getElementById('btn-sign-tx');
+const signerSelect = document.getElementById('signer-select');
+const txHashDisplay = document.getElementById('tx-hash-display');
+
+function setMainPrompt(text) {
+  const el = document.getElementById('main-prompt-text');
+  if (el) el.textContent = text || '';
+}
+
+function resetSignatureState({ clearHash = true } = {}) {
+  messageToSign = null;
+  rawTransaction = null;
+  currentSessionId = null;
+  currentSignatures.clear();
+
+  if (btnSignTx) {
+    btnSignTx.disabled = true;
+    btnSignTx.textContent = 'Sign (0/2)';
+    btnSignTx.classList.remove('btn-primary');
+    btnSignTx.classList.add('btn-success');
+    btnSignTx.onclick = null;
+  }
+  if (txHashDisplay && clearHash) txHashDisplay.value = '';
+}
+
+// Reset when wallet changes
+document.getElementById('existing-wallets')?.addEventListener('change', () => resetSignatureState());
+
+// ----------------------------
+// PIN MODAL (Sign Transaction)
+// ----------------------------
+const signPinModal = document.getElementById('cw2SignPinModal');
+const signPinLabel = document.getElementById('cw2SignPinLabel');
+const signPinInput = document.getElementById('cw2-sign-pin-input');
+const btnSubmitSignPin = document.getElementById('btn-submit-sign-pin');
+const btnCancelSignPin = document.getElementById('btn-cancel-sign-pin');
+const btnCloseSignPin = document.getElementById('btn-close-sign-pin');
+let pendingSignPinResolve = null;
+
+function openSignPin(deviceName) {
+  if (!signPinModal) return Promise.resolve(null);
+  if (signPinLabel) signPinLabel.textContent = `PIN for ${deviceName}`;
+  if (signPinInput) signPinInput.value = '';
+  signPinModal.classList.remove('hidden');
+  setTimeout(() => signPinInput?.focus(), 0);
+  return new Promise((resolve) => { pendingSignPinResolve = resolve; });
+}
+
+function closeSignPin(val = null) {
+  if (!signPinModal) return;
+  signPinModal.classList.add('hidden');
+  const r = pendingSignPinResolve;
+  pendingSignPinResolve = null;
+  if (r) r(val);
+}
+
+btnSubmitSignPin?.addEventListener('click', () => {
+  const v = (signPinInput?.value || '').trim();
+  if (!v) return;
+  closeSignPin(v);
+});
+btnCancelSignPin?.addEventListener('click', () => closeSignPin(null));
+btnCloseSignPin?.addEventListener('click', () => closeSignPin(null));
+signPinModal?.addEventListener('click', (e) => { if (e.target === signPinModal) closeSignPin(null); });
+signPinInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') btnSubmitSignPin?.click(); });
+
+function extractMessageToSign(messagesToSign) {
+  if (!Array.isArray(messagesToSign) || messagesToSign.length === 0) return null;
+  const msgItem = messagesToSign[0];
+  return (msgItem && (msgItem.Data || msgItem.data || msgItem.HashedMessage || msgItem.hashedMessage || msgItem.message || msgItem.Message)) || null;
+}
+
+// ----------------------------
+// SIGN BUTTON LOGIC
+// ----------------------------
+if (btnSignTx) {
+  btnSignTx.addEventListener('click', async () => {
+    if (!messageToSign) {
+      setMainPrompt("⚠️ Error: No message to sign. Please Scan QR first.");
+      return;
+    }
+    if (!currentSessionId) {
+      setMainPrompt("⚠️ Error: Session ID missing. Please rescan QR.");
+      return;
+    }
+    if (currentSignatures.size >= 2) {
+      setMainPrompt("✅ Transaction already fully signed!");
+      return;
+    }
+
+    const keyId = signerSelect?.value;
+    if (!keyId) {
+      setMainPrompt("⚠️ Please select a signer device.");
+      return;
+    }
+    const signerText = signerSelect?.selectedOptions?.[0]?.textContent || 'Selected device';
+
+    if (currentSignatures.has(keyId)) {
+      setMainPrompt(`⚠️ ${signerText} has already signed! Select another device.`);
+      return;
+    }
+
+    setMainPrompt(`Insert the PIN for ${signerText}`);
+    const pin = await openSignPin(signerText);
+    if (!pin) {
+      setMainPrompt("Operation cancelled (No PIN entered).");
+      return;
+    }
+
+    const encryptedPin = encryptUsingAES(pin);
+
+    const originalText = btnSignTx.textContent;
+    btnSignTx.disabled = true;
+    btnSignTx.textContent = 'Signing...';
+    setMainPrompt(`⏳ Tap your ${signerText} to sign.`);
+
+    try {
+      const signSessionPayload = {
+        sessionID: currentSessionId,
+        partyMemberID: keyId,
+        pin: encryptedPin
+      };
+
+      const signRes = await fetch('https://localhost:44379/api/Signature/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(signSessionPayload)
+      });
+      if (!signRes.ok) {
+        const errData = await signRes.json().catch(() => ({}));
+        throw new Error(errData.message || `API Error ${signRes.status}`);
+      }
+
+      const signData = await signRes.json();
+      currentSignatures.add(keyId);
+      const count = currentSignatures.size;
+
+      if (count < 2) {
+        setMainPrompt(`✅ Signed with ${signerText}. One more signature needed.`);
+        btnSignTx.textContent = `Sign (${count}/2)`;
+        btnSignTx.disabled = false;
+      } else {
+        const signature = signData.resultObject;
+        const currentAsset = (wallet.crypto || 'BTC').toString().toUpperCase();
+
+        const signedPayload = JSON.stringify({
+          action: "sign",
+          rawTransaction: rawTransaction,
+          signedInput: signature,
+          crypto: currentAsset
+        });
+
+        renderQR(signedPayload, "Signature Generated");
+        btnSignTx.textContent = "Show Result QR";
+        btnSignTx.classList.remove('btn-success');
+        btnSignTx.classList.add('btn-primary');
+        btnSignTx.disabled = false;
+
+        setMainPrompt("🎉 Threshold reached! Transaction fully signed.");
+        btnSignTx.onclick = () => renderQR(signedPayload, "Signature Generated");
+      }
+    } catch (err) {
+      console.error(err);
+      setMainPrompt(`❌ Signing failed: ${err.message || err}`);
+      btnSignTx.disabled = false;
+      btnSignTx.textContent = originalText || 'Sign (0/2)';
+    }
+  });
+}
+
+// ----------------------------
+// SCAN HANDLER (reuses camera modal)
+// ----------------------------
+async function cw2_handleDecodedText(decodedText, targetInputId) {
+  const raw = (decodedText || "").trim();
+
+  // Recipient Address scan
+  if (targetInputId === 'recipient-address') {
+    let cleanAddr = raw;
+    const lower = cleanAddr.toLowerCase();
+    if (lower.startsWith('ethereum:') || lower.startsWith('bitcoin:')) {
+      cleanAddr = cleanAddr.split(':')[1] || cleanAddr;
+    }
+    if (cleanAddr.includes('?')) cleanAddr = cleanAddr.split('?')[0];
+
+    const recipient = document.getElementById('recipient-address');
+    if (recipient) {
+      recipient.value = cleanAddr;
+      recipient.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    setMainPrompt("Address loaded from QR.");
+    cw2_closeScanner();
+    return;
+  }
+
+  // Transaction-to-sign scan
+  if (targetInputId === 'tx-hash-display') {
+    try {
+      const data = JSON.parse(raw);
+
+      if (!wallet.partyId) {
+        setMainPrompt("⚠️ Please select an existing wallet first (party missing).");
+        cw2_closeScanner();
+        return;
+      }
+
+      if (!data || !data.rawTxBytes || !Array.isArray(data.messagesToSign)) {
+        setMainPrompt("⚠️ Unrecognized Transaction QR format.");
+        cw2_closeScanner();
+        return;
+      }
+
+      resetSignatureState({ clearHash: false });
+
+      rawTransaction = data.rawTxBytes;
+      messageToSign = extractMessageToSign(data.messagesToSign);
+
+      if (txHashDisplay) txHashDisplay.value = messageToSign || '';
+
+      // Like coldwallet(2): as soon as the TX QR is recognized, make the button available.
+      if (btnSignTx) {
+        btnSignTx.disabled = false;
+        btnSignTx.textContent = 'Sign (0/2)';
+        btnSignTx.classList.remove('btn-primary');
+        btnSignTx.classList.add('btn-success');
+        btnSignTx.onclick = null;
+      }
+
+      setMainPrompt("⏳ Initializing Signing Session...");
+
+      const createPayload = { partyGUID: wallet.partyId, messageToSign: messageToSign };
+      const createRes = await fetch('https://localhost:44379/api/Signature/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createPayload)
+      });
+      if (!createRes.ok) throw new Error(`Failed to init session (${createRes.status})`);
+      const createData = await createRes.json();
+      currentSessionId = createData.resultObject;
+
+      setMainPrompt("Session Ready. Select a device and click 'Sign' (2 required).");
+      if (btnSignTx) {
+        btnSignTx.disabled = false;
+        btnSignTx.textContent = 'Sign (0/2)';
+      }
+    } catch (e) {
+      console.warn(e);
+      setMainPrompt("⚠️ Unrecognized QR (Text/JSON).");
+    } finally {
+      cw2_closeScanner();
+    }
+    return;
+  }
+
+  // Default fallback: fill input
+  const target = document.getElementById(targetInputId);
+  if (target) {
+    target.value = raw;
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  cw2_closeScanner();
+}
+
+/* QR SCANNER (camera) for "Transaction Creation" and "Sign Transaction"
+   Uses html5-qrcode already included in this page.
+   ----------------------------------------------------------- */
+
+const scanModal = document.getElementById('scanQRModal');
+const btnCloseScan = document.getElementById('btn-close-scan');
+const btnScanRecipient = document.getElementById('btn-scan-recipient');
+const btnScanTxHash = document.getElementById('btn-scan-qr');
+
+let cw2QrScanner = null;
+let cw2ScanTargetInput = null;
+
+function cw2_openScanner(targetInputId) {
+  cw2ScanTargetInput = document.getElementById(targetInputId);
+  if (!scanModal || !cw2ScanTargetInput) return;
+
+  scanModal.classList.remove('hidden');
+
+  // Lazily create scanner instance
+  if (!cw2QrScanner) {
+    cw2QrScanner = new window.Html5Qrcode("qr-reader");
+  }
+
+  const config = { fps: 10, qrbox: 250 };
+
+  // Start camera
+  cw2QrScanner.start(
+    { facingMode: "environment" },
+    config,
+    async (decodedText) => {
+      // Close the modal right away once we have a decode (like coldwallet(2))
+      // to avoid multiple reads / a lingering popup.
+      cw2_closeScanner();
+      try {
+        if (typeof window.cw2_handleDecodedText === 'function') {
+          await window.cw2_handleDecodedText(decodedText, targetInputId);
+        } else {
+          const el = document.getElementById(targetInputId);
+          if (el) {
+            el.value = (decodedText || "").trim();
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          cw2_closeScanner();
+        }
+      } catch (e) {
+        console.error(e);
+        cw2_closeScanner();
+      }
+    },
+    () => {} // ignore per-frame decode errors
+  ).catch((err) => {
+    console.error("QR scan start error:", err);
+    // keep modal open, but show a lightweight message
+    const hint = scanModal.querySelector('.text-muted');
+    if (hint) hint.textContent = "Unable to access camera. Check permissions / HTTPS.";
+  });
+}
+
+function cw2_closeScanner() {
+  if (!scanModal) return;
+
+  // Hide immediately (UX), then stop the camera in the background.
+  scanModal.classList.add('hidden');
+
+  if (cw2QrScanner) {
+    cw2QrScanner.stop()
+      .then(() => cw2QrScanner.clear())
+      .catch(() => {}); // ignore stop errors
+  }
+}
+
+if (btnCloseScan) btnCloseScan.addEventListener('click', cw2_closeScanner);
+
+// Open scanner for the two buttons
+if (btnScanRecipient) btnScanRecipient.addEventListener('click', () => cw2_openScanner('recipient-address'));
+if (btnScanTxHash) btnScanTxHash.addEventListener('click', () => cw2_openScanner('tx-hash-display'));
+
+// Optional: click on backdrop closes (if you want)
+scanModal?.addEventListener('click', (e) => {
+  if (e.target === scanModal) cw2_closeScanner();
+});
+
+
+// Expose scanner handlers for legacy scripts (module scope is not global)
+try{
+  if (typeof cw2_handleDecodedText === 'function') window.cw2_handleDecodedText = cw2_handleDecodedText;
+  if (typeof cw2_openScanner === 'function') window.cw2_openScanner = cw2_openScanner;
+  if (typeof cw2_closeScanner === 'function') window.cw2_closeScanner = cw2_closeScanner;
+}catch(e){}
+
 </script>
