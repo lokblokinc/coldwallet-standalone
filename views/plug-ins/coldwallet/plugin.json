@@ -6,10 +6,6 @@
   "icon": "fas fa-wallet",
   "category": "wallet",
   "enabled": true,
-  "modeSupport": {
-    "personal": true,
-    "business": true
-  },
   "mainRoute": "/coldwallet",
   "routeConfig": {
     "main": "/coldwallet"

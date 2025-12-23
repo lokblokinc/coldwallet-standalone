@@ -26,5 +26,9 @@ cp -r "$SOURCE" "$TARGET"
 echo "✏️  Modifying layout reference..."
 sed -i "1s/layout('layout')/layout('layout-minimal')/" "$TARGET/coldwallet.ejs"
 
+# Remove Zone.Identifier files
+echo "🧹 Cleaning up Zone.Identifier files..."
+find "$TARGET" -name "*:Zone.Identifier" -type f -delete
+
 echo "✅ Plugin updated successfully"
 echo "💡 Old version backed up with timestamp"
