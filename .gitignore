@@ -19,6 +19,9 @@ data/*.db
 *.backup.*
 views/plug-ins/coldwallet.backup.*
 
+# Build output
+dist/
+
 # Logs
 logs/
 *.log
