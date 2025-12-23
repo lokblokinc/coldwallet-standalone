@@ -1,0 +1,107 @@
+<% layout('/layout-minimal') -%>
+
+<div class="container mt-5">
+  <div class="alert alert-danger border-danger" role="alert" style="max-width: 800px; margin: 0 auto;">
+    <div class="text-center mb-4">
+      <i class="fas fa-network-wired fa-4x text-danger mb-3"></i>
+      <h1 class="alert-heading">Cold Wallet Unavailable</h1>
+    </div>
+    
+    <hr>
+    
+    <div class="mb-4">
+      <p class="lead">
+        <strong>Network connectivity detected.</strong> Cold Wallet requires complete 
+        network isolation (air-gap) for security.
+      </p>
+      <p>
+        This application is designed to operate only on systems with no network 
+        connectivity to prevent potential security threats and unauthorized access.
+      </p>
+    </div>
+    
+    <% if (detection.interfaces && detection.interfaces.length > 0 || detection.gateway) { %>
+      <div class="mb-4">
+        <h5><i class="fas fa-exclamation-triangle text-warning"></i> Detected Network Activity:</h5>
+        <ul class="mb-0">
+          <% if (detection.interfaces && detection.interfaces.length > 0) { %>
+            <li>
+              <strong>Active network interfaces:</strong>
+              <ul>
+                <% detection.interfaces.forEach(iface => { %>
+                  <li>
+                    <code><%= iface.name %></code>: 
+                    <%= iface.address %> 
+                    <% if (iface.mac) { %>
+                      <small class="text-muted">(MAC: <%= iface.mac %>)</small>
+                    <% } %>
+                  </li>
+                <% }); %>
+              </ul>
+            </li>
+          <% } %>
+          <% if (detection.gateway) { %>
+            <li>
+              <strong>Default gateway configured</strong> (routing enabled)
+              <% if (detection.details && detection.details.gateway) { %>
+                <div class="mt-1 small text-muted">
+                  <% if (detection.details.gateway.iface) { %>
+                    <span><strong>Interface:</strong> <code><%= detection.details.gateway.iface %></code></span>
+                  <% } %>
+                  <% if (detection.details.gateway.gateway) { %>
+                    <span class="ms-2"><strong>Gateway:</strong> <code><%= detection.details.gateway.gateway %></code></span>
+                  <% } %>
+                  <% if (detection.details.gateway.reason) { %>
+                    <span class="ms-2"><strong>Reason:</strong> <%= detection.details.gateway.reason %></span>
+                  <% } %>
+                </div>
+              <% } %>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    <% } %>
+    
+    <div class="p-4 bg-light border rounded">
+      <h6 class="mb-3"><i class="fas fa-shield-alt"></i> To proceed with Cold Wallet:</h6>
+      <ol class="mb-0">
+        <li>Disconnect all network cables (Ethernet)</li>
+        <li>Disable WiFi adapters in system settings</li>
+        <li>Disable Bluetooth (if applicable)</li>
+        <li>Verify all network adapters show as "Disabled" in system settings</li>
+        <li>Refresh this page or restart the application</li>
+      </ol>
+    </div>
+    
+    <div class="mt-4 text-center">
+      <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+        <i class="fas fa-sync-alt"></i> Refresh and Re-check
+      </button>
+    </div>
+    
+    <hr class="mt-4">
+    
+    <div class="text-muted small">
+      <div><strong>Detection timestamp:</strong> <%= detection.timestamp %></div>
+        <% if (detection.details && detection.details.gateway && detection.details.gateway.reason) { %>
+          <div class="mt-1"><strong>Gateway diagnostic:</strong> <%= detection.details.gateway.reason %></div>
+        <% } %>
+      <div class="mt-1">
+        <strong>Security notice:</strong> This page will display whenever network connectivity 
+        is detected. The server performs network checks on each request.
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .alert-danger {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  code {
+    background-color: rgba(0,0,0,0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+</style>

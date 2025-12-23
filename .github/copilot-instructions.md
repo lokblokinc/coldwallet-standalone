@@ -141,6 +141,36 @@ See `DEPLOYMENT.md` for systemd, Docker, PM2 configs. Key points:
 
 Currently `user_id` field exists in `Address` model but is nullable and unused.
 
+## Network Detection
+
+### Air-Gap Enforcement
+The server includes network detection to ensure Cold Wallet only runs on truly air-gapped machines:
+
+- **Detection logic:** `utils/networkDetection.js` checks for active network interfaces and default gateway
+- **Middleware:** Runs on every request (except `/health`), blocks access if network detected
+- **Client-side monitoring:** JavaScript polls `/health` every 5 seconds, reloads if network detected
+- **Result caching:** 10-second cache (configurable via `NETWORK_DETECTION_CACHE_MS`)
+
+### Key Files
+- `utils/networkDetection.js`: Core detection logic with cross-platform support
+- `views/network-blocked.ejs`: Error page shown when network detected
+- `server.js` line 30-60: Middleware that enforces air-gap policy
+
+### Configuration
+```bash
+NETWORK_DETECTION_ENABLED=true          # Enable/disable (default: true)
+NETWORK_DETECTION_CACHE_MS=10000        # Cache duration in ms
+NETWORK_DETECTION_WHITELIST_INTERFACES= # Comma-separated interfaces to ignore
+```
+
+**Development bypass:** Add `?bypass=network` query param in dev mode only.
+
+### Detection Flow
+1. Request arrives → middleware checks network
+2. If network detected → return 403 with `network-blocked.ejs`
+3. If no network → proceed to Cold Wallet
+4. Client polls `/health` every 5s → reloads if network appears
+
 ## Common Tasks
 
 ### Adding a New API Endpoint
@@ -158,6 +188,16 @@ Check browser console for TSS API calls. Server only passes env vars to client -
 
 ### Adding New Assets
 Place in `views/plug-ins/coldwallet/assets/` - server serves them at `/plug-ins/coldwallet/assets/*`.
+
+### Testing Network Detection
+```bash
+# Disable detection for testing
+NETWORK_DETECTION_ENABLED=false npm start
+
+# Test with detection enabled
+ip link show                    # Check active interfaces
+curl localhost:3001/health      # View detection status
+```
 
 ## Building Standalone Executables
 
