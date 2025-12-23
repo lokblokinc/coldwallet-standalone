@@ -198,12 +198,27 @@
     font-size: 0.95rem;
   }
 
-  .custom-modal:not(.hidden) { display:block; }
-  .custom-modal { background: white !important; outline: none !important; }
+  /* Modal overlay - fixed positioning with centering */
+  .custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    outline: none !important;
+  }
+  .custom-modal.hidden {
+    display: none !important;
+  }
   /* Polished modal container */
-  .custom-modal .modal-content { 
-    border-radius: 14px; 
-    box-shadow: 0 22px 55px rgba(0,0,0,.28); 
+  .custom-modal .modal-content {
+    border-radius: 14px;
+    box-shadow: 0 22px 55px rgba(0,0,0,.28);
     border: 1px solid rgba(0,0,0,.1);
     padding:0;
     margin:0;
@@ -213,6 +228,7 @@
     overflow:hidden;
     background:#fff;
   }
+  
   /* Widen wallet modals */
   #cw2-sendModal .modal-content,
   #cw2-receive .modal-content,
