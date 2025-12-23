@@ -129,7 +129,7 @@
   
   /* --- MODAL STYLES (FIXED CENTERING) --- */
   /* Ensure custom-modal-content behaves like a real modal panel (some modals use .custom-modal-content, not .modal-content) */
-  .custom-modal-content{
+  .custom-modal-content {
     width: 100%;
     border-radius: 14px;
     box-shadow: 0 22px 55px rgba(0,0,0,.28);
@@ -199,10 +199,10 @@
   }
 
   /* Modal overlay - fixed positioning with centering */
-  .custom-modal {
+  .custom-modal { 
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
     right: 0;
     bottom: 0;
     z-index: 9999;
@@ -212,13 +212,13 @@
     background: rgba(0, 0, 0, 0.5);
     outline: none !important;
   }
-  .custom-modal.hidden {
-    display: none !important;
+  .custom-modal.hidden { 
+    display: none !important; 
   }
   /* Polished modal container */
-  .custom-modal .modal-content {
-    border-radius: 14px;
-    box-shadow: 0 22px 55px rgba(0,0,0,.28);
+  .custom-modal .modal-content { 
+    border-radius: 14px; 
+    box-shadow: 0 22px 55px rgba(0,0,0,.28); 
     border: 1px solid rgba(0,0,0,.1);
     padding:0;
     margin:0;
@@ -228,7 +228,6 @@
     overflow:hidden;
     background:#fff;
   }
-  
   /* Widen wallet modals */
   #cw2-sendModal .modal-content,
   #cw2-receive .modal-content,
@@ -694,7 +693,22 @@
 let selectedAsset = null;
 let wallet = { address: null, partyId: null, participants: [], token: null };
 let cachedParties = [];
-let pendingPinResolve = null; 
+let pendingPinResolve = null;
+function extractSerialFromPinCheck(resp) {
+    if (!resp) return null;
+    if (typeof resp === 'string') return resp || null;
+    
+    // Check various properties where the serial might be hidden depending on API response structure
+    const p = resp.payload || resp.resultObject || resp;
+    
+    return (
+        p.SerialNumber ||
+        p.serialNumber ||
+        (typeof p.Message === 'string' ? p.Message : null) ||
+        (typeof p.message === 'string' ? p.message : null) ||
+        null
+    );
+}
 
 const createModal = document.getElementById('cw2-addWallet');
 const btnOpenCreate = document.getElementById('btn-open-create-modal');
@@ -869,9 +883,15 @@ async function startWalletCreation() {
   try {
     updateStats(0,0);
     
+    // Initialize exclusion list and map for member serials
+    // Using simple object keyed by index to be robust
+    let SerialNumbersToExclude = []; 
+    let memberSerials = {}; 
+
     setStep(1, 'active');
     setModalStatus("Initializing Party on Server...");
     
+    // 1. CREATE PARTY
     const createPartyData = {
       assets: [selectedAsset],
       size: 3,
@@ -887,6 +907,7 @@ async function startWalletCreation() {
     const partyData = await createPartyres.json();
     const partyId = partyData.resultObject[0];
     
+    // 2. ADD MEMBERS
     const AddMembersToPartyData = {
       partyID: partyId,
       members: [
@@ -908,36 +929,99 @@ async function startWalletCreation() {
     setStep(1, 'completed');
 
     let enrolledCount = 0;
-    let memberCredentials = {}; 
+    let memberCredentials = {}; // Stores encrypted PINs by Index
 
+    // --- AUTHORIZATION LOOP ---
     for (let i = 0; i < members.length; i++) {
         const member = members[i];
         const stepNum = i + 2; 
         setStep(stepNum, 'active');
         
-        const pin = await askPin(member.name);
-        
-        const encryptedPin = encryptUsingAES(pin);
-        memberCredentials[member.id] = encryptedPin; 
-        
-        setModalStatus(`Tap ${member.name} to authorize...`);
-        
-        const authBody = JSON.stringify({ participantId: member.id, pin: encryptedPin, SerialNumbersToExclude: [] });
-        const authRes = await fetch(`https://localhost:44379/api/Party/authorize`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: authBody
-        });
-        if (!authRes.ok) throw new Error(`Auth failed for ${member.name}`);
-        
-        enrolledCount++;
-        updateStats(enrolledCount, 0);
-        setStep(stepNum, 'completed');
-        
-        setModalStatus(`Remove ${member.name} and wait...`);
-        await sleep(3000);
+        let attempts = 0;
+        let isAuthorized = false;
+
+        while (!isAuthorized && attempts < 3) {
+            
+            if (attempts > 0) {
+                cw2_setStatusMessage(`Wrong PIN. Try again (${attempts}/3).`, 'error');
+            } else {
+                cw2_setStatusMessage(`Enter PIN for ${member.name}`, 'info');
+            }
+
+            const pin = await askPin(member.name);
+            const encryptedPin = encryptUsingAES(pin);
+            
+            if(i == 0) {
+              cw2_setStatusMessage(`Using inserted ${member.name}, do not remove.`, 'info');
+            } else {
+              cw2_setStatusMessage(`Tap or insert ${member.name} to authorize...`, 'info');
+            }
+            
+            // Send current exclusion list
+            const authBody = JSON.stringify({ 
+                participantId: member.id, 
+                pin: encryptedPin, 
+                SerialNumbersToExclude: SerialNumbersToExclude 
+            });
+            
+            const authRes = await fetch(`https://localhost:44379/api/Party/authorize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: authBody
+            });
+
+            const responseData = await authRes.json();
+            
+            // DEBUG: Log extracting logic
+            const _serial = extractSerialFromPinCheck(responseData);
+            console.log(`[Auth] Member index ${i} (${member.name}). Extracted Serial: ${_serial}`);
+
+            if (_serial) {
+                if (!SerialNumbersToExclude.includes(_serial)) {
+                    SerialNumbersToExclude.push(_serial);
+                }
+                // Save serial mapped by INDEX to be safe
+                memberSerials[i] = _serial;
+            }
+
+            const isLogicalError = responseData.error || 
+                                   responseData.Error || 
+                                   (responseData.Message && responseData.Message.toLowerCase().includes("wrong")) ||
+                                   (responseData.message && responseData.message.toLowerCase().includes("wrong"));
+
+            if (!authRes.ok || isLogicalError) {
+                const errorMsg = responseData.Message || responseData.message || responseData.error || "Unknown Error";
+                
+                if (errorMsg.toLowerCase().includes("wrong pin")) {
+                    attempts++;
+                    if (attempts >= 3) {
+                        cw2_setStatusMessage("Wrong PIN entered 3 times. Creation aborted.", 'error');
+                        const pinSec = document.getElementById('cw2-pin-section');
+                        if(pinSec) pinSec.classList.add('d-none');
+                        throw new Error("PIN attempts exceeded");
+                    }
+                } else {
+                    cw2_setStatusMessage(`Error: ${errorMsg}`, 'error');
+                    throw new Error(`Auth failed: ${errorMsg}`);
+                }
+            } else {
+                isAuthorized = true;
+                memberCredentials[i] = encryptedPin; // Store creds by Index
+                enrolledCount++;
+                updateStats(enrolledCount, 0);
+                setStep(stepNum, 'completed');
+                
+                if (i == 0) {
+                  cw2_setStatusMessage(`Please leave ${member.name} inserted, follow the next prompt.`, 'success');
+                } else {
+                  cw2_setStatusMessage(`Remove ${member.name}and wait...`, 'success');
+                }
+                await sleep(3000);
+            }
+        }
     }
 
+    // --- ACTIVATION START ---
     setStep(5, 'active');
     setModalStatus("Starting Activation...");
     
@@ -947,17 +1031,29 @@ async function startWalletCreation() {
       body: JSON.stringify({ partyID: partyId })
     });
 
+    // --- SAVE SHARES LOOP ---
+    // Using 'let i' loop to access the correct serial via index
     let sharesCount = 0;
-    for (const member of members) {
+    for (let i = 0; i < members.length; i++) {
+        const member = members[i];
+        
         setModalStatus(`Tap ${member.name} to save share...`);
         
-        const reusedEncryptedPin = memberCredentials[member.id];
+        const reusedEncryptedPin = memberCredentials[i];
         
+        // LOGIC: Filter exclusion list using the INDEX
+        const currentMemberSerial = memberSerials[i];
+        
+        // Create specific list: All serials MINUS the current one
+        const specificExclusionList = SerialNumbersToExclude.filter(s => s !== currentMemberSerial);
+        
+        console.log(`[Save] Index ${i} (${member.name}). Serial: ${currentMemberSerial}. Exclude List Size: ${specificExclusionList.length}`);
+
         const saveBody = JSON.stringify({ 
             partyId: partyId,
             participantId: member.id, 
             pin: reusedEncryptedPin, 
-            SerialNumbersToExclude: [] 
+            SerialNumbersToExclude: specificExclusionList 
         });
         
         const saveRes = await fetch(`https://localhost:44379/api/Party/save`, {
@@ -965,6 +1061,7 @@ async function startWalletCreation() {
             headers: { 'Content-Type': 'application/json' },
             body: saveBody
         });
+        
         if (!saveRes.ok) throw new Error(`Save share failed for ${member.name}`);
         
         sharesCount++;
@@ -975,6 +1072,7 @@ async function startWalletCreation() {
     
     setStep(5, 'completed');
 
+    // --- FINALIZE ---
     setStep(6, 'active');
     setModalStatus("Finalizing Wallet...");
     
@@ -996,12 +1094,19 @@ async function startWalletCreation() {
     btnCancelCreate.disabled = false;
     btnStartCeremony.classList.add('d-none');
 
+    const walletSelect = document.getElementById('existing-wallets');
+    const opt = document.createElement('option');
+    opt.value = finalAddr;
+    opt.textContent = `${finalAddr} (${selectedAsset})`;
+    opt.dataset.partyId = partyId;
+    opt.dataset.asset = selectedAsset;
+    opt.selected = true;
+    walletSelect.appendChild(opt);
     
-    // Make the freshly created address the active one in the blue selector,
-    // and disable "Create new wallet" unless "-- Create New --" is selected.
-    const fallbackParty = { partyAddress: finalAddr, assetCode: selectedAsset, id: partyId, members: members };
-    await loadExistingWallets(finalAddr, fallbackParty);
-} catch (e) {
+    updateMainInterface(finalAddr, selectedAsset);
+    loadExistingWallets(); 
+
+  } catch (e) {
     console.error(e);
     setModalStatus("Error: " + e.message);
     btnStartCeremony.disabled = false;
