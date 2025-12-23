@@ -5,6 +5,7 @@ const path = require('path');
 const engine = require('ejs-mate');
 const sequelize = require('./config/database');
 const Address = require('./models/address');
+const networkDetector = require('./utils/networkDetection');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,6 +26,38 @@ app.use('/plug-ins/coldwallet/assets', express.static(path.join(__dirname, 'view
 // Request logging
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Network detection middleware - block access if network detected
+app.use((req, res, next) => {
+  // Skip network check for health endpoint
+  if (req.path === '/health') {
+    return next();
+  }
+
+  // Check for bypass in development mode
+  if (process.env.NODE_ENV === 'development' && req.query.bypass === 'network') {
+    console.warn('⚠️  Network detection bypassed via query parameter (dev mode)');
+    return next();
+  }
+
+  const detection = networkDetector.detect();
+  
+  if (detection.hasNetwork) {
+    // Network detected - block access
+    return res.status(403).render('network-blocked', {
+      title: 'Cold Wallet Unavailable',
+      stylesheets: ['/css/loading-overlay.css'],
+      detection: {
+        interfaces: detection.interfaces,
+        gateway: detection.gateway,
+        details: detection.details || {},
+        timestamp: detection.timestamp
+      }
+    });
+  }
+  
   next();
 });
 
@@ -177,9 +210,19 @@ app.delete('/api/addresses/:address', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  const detection = networkDetector.detect();
+  
   res.json({
-    status: 'healthy',
+    status: detection.hasNetwork ? 'blocked' : 'healthy',
     timestamp: new Date().toISOString(),
+    networkDetection: {
+      enabled: detection.enabled,
+      hasNetwork: detection.hasNetwork,
+      interfaces: detection.interfaces || [],
+      gateway: detection.gateway || false,
+      details: detection.details || {},
+      config: networkDetector.getConfig()
+    },
     config: {
       tssApiUrl: process.env.TSS_ORCHESTRATOR_API_URL || 'not_configured',
       nodeEnv: process.env.NODE_ENV || 'development'

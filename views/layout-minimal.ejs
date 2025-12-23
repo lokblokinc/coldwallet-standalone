@@ -55,5 +55,33 @@
   <footer class="minimal-footer">
     <p>&copy; 2025 Lokblok, Inc. All rights reserved. | Minimal Cold Wallet Server</p>
   </footer>
+
+  <!-- Network Detection - Periodic Check -->
+  <script>
+    (function() {
+      // Only run on Cold Wallet pages (not on network-blocked page)
+      if (window.location.pathname === '/' && !document.querySelector('.alert-danger')) {
+        let checkInterval = 5000; // Check every 5 seconds
+        
+        async function checkNetworkStatus() {
+          try {
+            const response = await fetch('/health');
+            const data = await response.json();
+            
+            if (data.networkDetection && data.networkDetection.hasNetwork) {
+              console.warn('Network detected - redirecting to blocked page');
+              window.location.reload();
+            }
+          } catch (err) {
+            console.error('Health check failed:', err);
+          }
+        }
+        
+        // Start periodic checks
+        setInterval(checkNetworkStatus, checkInterval);
+        console.log('Network detection monitoring active (checking every ' + (checkInterval/1000) + 's)');
+      }
+    })();
+  </script>
 </body>
 </html>
