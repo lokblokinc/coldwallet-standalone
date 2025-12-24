@@ -201,8 +201,8 @@
   /* Modal overlay - fixed positioning with centering */
   .custom-modal { 
     position: fixed;
-    top: 50%;
-    left: 50%;
+    top: 0;
+    left: 0;
     right: 0;
     bottom: 0;
     z-index: 9999;
@@ -829,22 +829,30 @@ function cw2_setStatusMessage(message, type = 'neutral') {
   const statusElement = document.getElementById('cw2-status-text');
   const statusContainer = document.getElementById('cw2-creation-status');
 
-  if (statusElement) statusElement.textContent = message;
+  if (statusElement) {
+      statusElement.textContent = message;
+      // FIX: Ensure the text element itself is visible (it gets hidden on success)
+      statusElement.classList.remove('d-none'); 
+      statusElement.style.display = 'block'; 
+  }
 
   if (statusContainer) {
-    // NON usare più alert/alert-*
+    // Remove old specific alert classes
     statusContainer.classList.remove(
       'alert', 'alert-success', 'alert-danger', 'alert-info',
       'cw2-status-success', 'cw2-status-error', 'cw2-status-info', 'cw2-status-neutral'
     );
-
-    // base class tua (opzionale ma consigliata)
+    // Add custom base class
     statusContainer.classList.add('cw2-status');
 
+    // Apply new style based on type
     if (type === 'success') statusContainer.classList.add('cw2-status-success');
     else if (type === 'error') statusContainer.classList.add('cw2-status-error');
     else if (type === 'info') statusContainer.classList.add('cw2-status-info');
     else statusContainer.classList.add('cw2-status-neutral');
+    
+    // Ensure the container is also visible
+    statusContainer.classList.remove('d-none');
   }
 }
 
@@ -973,17 +981,6 @@ async function startWalletCreation() {
             const responseData = await authRes.json();
             
             // DEBUG: Log extracting logic
-            const _serial = extractSerialFromPinCheck(responseData);
-            console.log(`[Auth] Member index ${i} (${member.name}). Extracted Serial: ${_serial}`);
-
-            if (_serial) {
-                if (!SerialNumbersToExclude.includes(_serial)) {
-                    SerialNumbersToExclude.push(_serial);
-                }
-                // Save serial mapped by INDEX to be safe
-                memberSerials[i] = _serial;
-            }
-
             const isLogicalError = responseData.error || 
                                    responseData.Error || 
                                    (responseData.Message && responseData.Message.toLowerCase().includes("wrong")) ||
@@ -1006,6 +1003,16 @@ async function startWalletCreation() {
                 }
             } else {
                 isAuthorized = true;
+                const _serial = extractSerialFromPinCheck(responseData);
+                console.log(`[Auth] Member index ${i} (${member.name}). Extracted Serial: ${_serial}`);
+
+                if (_serial) {
+                    if (!SerialNumbersToExclude.includes(_serial)) {
+                        SerialNumbersToExclude.push(_serial);
+                    }
+                    // Save serial mapped by INDEX to be safe
+                    memberSerials[i] = _serial;
+                }
                 memberCredentials[i] = encryptedPin; // Store creds by Index
                 enrolledCount++;
                 updateStats(enrolledCount, 0);
@@ -1014,7 +1021,7 @@ async function startWalletCreation() {
                 if (i == 0) {
                   cw2_setStatusMessage(`Please leave ${member.name} inserted, follow the next prompt.`, 'success');
                 } else {
-                  cw2_setStatusMessage(`Remove ${member.name}and wait...`, 'success');
+                  cw2_setStatusMessage(`Remove ${member.name} and wait...`, 'success');
                 }
                 await sleep(3000);
             }
@@ -1037,7 +1044,11 @@ async function startWalletCreation() {
     for (let i = 0; i < members.length; i++) {
         const member = members[i];
         
-        setModalStatus(`Tap ${member.name} to save share...`);
+        if (i == 0) {
+          setModalStatus(`Saving the share in ${member.name} ..`);
+        } else {
+          setModalStatus(`Tap or insert ${member.name} to save the private share..`);
+        }
         
         const reusedEncryptedPin = memberCredentials[i];
         
@@ -1066,7 +1077,11 @@ async function startWalletCreation() {
         
         sharesCount++;
         updateStats(enrolledCount, sharesCount);
-        setModalStatus(`Remove ${member.name}...`);
+        if (i == 0) {
+           setModalStatus(`Keep ${member.name} connected and wait...`);
+        } else {
+           setModalStatus(`Remove ${member.name}...`);
+        }
         await sleep(2000);
     }
     
@@ -1446,7 +1461,7 @@ if (btnSignTx) {
     const originalText = btnSignTx.textContent;
     btnSignTx.disabled = true;
     btnSignTx.textContent = 'Signing...';
-    setMainPrompt(`⏳ Tap your ${signerText} to sign.`);
+    setMainPrompt(`⏳ Tap or insert your ${signerText} to sign.`);
 
     try {
       const signSessionPayload = {
