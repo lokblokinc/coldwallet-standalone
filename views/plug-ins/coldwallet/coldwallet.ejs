@@ -913,6 +913,7 @@ async function startWalletCreation() {
         body: JSON.stringify(createPartyData)
     });
     const partyData = await createPartyres.json();
+    console.log(partyData);
     const partyId = partyData.resultObject[0];
     
     // 2. ADD MEMBERS
@@ -931,6 +932,7 @@ async function startWalletCreation() {
       body: JSON.stringify(AddMembersToPartyData)
     });
     const AddMembersData = await AddMembersRes.json();
+    console.log(AddMembersData);
     const members = AddMembersData.resultObject;
     wallet.participants = members;
     
@@ -979,6 +981,7 @@ async function startWalletCreation() {
             });
 
             const responseData = await authRes.json();
+            console.log(responseData);
             
             // DEBUG: Log extracting logic
             const isLogicalError = responseData.error || 
@@ -1072,6 +1075,8 @@ async function startWalletCreation() {
             headers: { 'Content-Type': 'application/json' },
             body: saveBody
         });
+
+        console.log(saveRes.json());
         
         if (!saveRes.ok) throw new Error(`Save share failed for ${member.name}`);
         
@@ -1097,6 +1102,7 @@ async function startWalletCreation() {
       body: JSON.stringify({ partyID: partyId }) 
     });
     const EndResData = await EndActivationRes.json();
+    console.log(EndResData);
     const finalAddr = EndResData.resultObject.address;
     
     setStep(6, 'completed');
@@ -1165,6 +1171,7 @@ async function loadExistingWallets(selectAddress = null, fallbackParty = null) {
     try {
         const res = await fetch('https://localhost:44379/api/Party');
         const data = await res.json();
+        console.log(data);
         cachedParties = data.resultObject || [];
 
         // If API doesn't yet return the freshly created wallet, keep a fallback
@@ -1481,6 +1488,7 @@ if (btnSignTx) {
       }
 
       const signData = await signRes.json();
+      console.log(signData);
       currentSignatures.add(keyId);
       const count = currentSignatures.size;
 
@@ -1585,6 +1593,7 @@ async function cw2_handleDecodedText(decodedText, targetInputId) {
       });
       if (!createRes.ok) throw new Error(`Failed to init session (${createRes.status})`);
       const createData = await createRes.json();
+      console.log(createData);
       currentSessionId = createData.resultObject;
 
       setMainPrompt("Session Ready. Select a device and click 'Sign' (2 required).");
