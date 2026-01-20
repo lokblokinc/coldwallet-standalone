@@ -46,7 +46,7 @@ router.get('/api/addresses', async (req, res) => {
   try {
     const addresses = await Address.findAll({
       where: { user_id: req.user.id },
-      attributes: ['id', 'address', 'asset', 'partyGUID']
+      attributes: ['id', 'address', 'asset', 'partyGUID', 'walletName']
     });
     
     res.json({ success: true, addresses });
@@ -63,7 +63,7 @@ router.post('/api/addresses', async (req, res) => {
   
   while (attempt < maxRetries) {
     try {
-      const { address, partyGUID, asset, userId } = req.body || {};
+      const { address, partyGUID, asset, userId, walletName } = req.body || {};
       if (!address) return res.status(400).json({ error: 'Missing address' });
 
       // Validate toughkey_id exists if provided
@@ -83,6 +83,7 @@ router.post('/api/addresses', async (req, res) => {
           address,
           partyGUID,
           asset,
+          walletName,
           user_id: userId ?? null
         }
       });
@@ -91,6 +92,7 @@ router.post('/api/addresses', async (req, res) => {
         const needsUpdate =
           (userId && row.user_id !== userId) ||
           (asset && row.asset !== asset) ||
+          (walletName && row.walletName !== walletName) ||
           (partyGUID && row.partyGUID !== partyGUID);
 
         if (needsUpdate) {
@@ -108,6 +110,7 @@ router.post('/api/addresses', async (req, res) => {
           await row.update({
             user_id: (userId ?? row.user_id),
             asset: (asset ?? row.asset),
+            walletName: (walletName ?? row.walletName),
             partyGUID: (partyGUID ?? row.partyGUID)
           });
         }
@@ -220,7 +223,7 @@ async function loadWalletData(userId) {
   try {
     const addresses = await Address.findAll({
       where: { user_id: userId },
-      attributes: ['address', 'asset']
+      attributes: ['address', 'asset', 'walletName']
     });
     
     return {
