@@ -42,6 +42,7 @@
     "migrations/20250917142141-create-address.js",
     "migrations/20250924142751-add-asset-to-addresses.js",
     "migrations/20251002093316-add-userid-to-address.js",
+    "migrations/20261601095328-add-walletName-to-address.js",
     "migrations/001-add-consumer-wallet-settings.js"
   ],
   "assets": {
