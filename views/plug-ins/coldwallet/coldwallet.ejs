@@ -921,7 +921,7 @@ async function startWalletCreation() {
       walletName: walletName
     };
     
-    const createPartyres = await fetch('https://localhost:44379/api/Party/create', {
+    const createPartyres = await fetch('http://localhost:44379/api/Party/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createPartyData)
@@ -939,7 +939,7 @@ async function startWalletCreation() {
       ]
     };
     
-    const AddMembersRes = await fetch("https://localhost:44379" + '/api/Party/addMembers', {
+    const AddMembersRes = await fetch("http://localhost:44379" + '/api/Party/addMembers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(AddMembersToPartyData)
@@ -986,7 +986,7 @@ async function startWalletCreation() {
                 SerialNumbersToExclude: SerialNumbersToExclude 
             });
             
-            const authRes = await fetch(`https://localhost:44379/api/Party/authorize`, {
+            const authRes = await fetch(`http://localhost:44379/api/Party/authorize`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: authBody
@@ -1048,7 +1048,7 @@ async function startWalletCreation() {
     setStep(5, 'active');
     setModalStatus("Starting Activation...");
     
-    await fetch("https://localhost:44379" + '/api/Activation/start', {
+    await fetch("http://localhost:44379" + '/api/Activation/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ partyID: partyId })
@@ -1083,7 +1083,7 @@ async function startWalletCreation() {
             SerialNumbersToExclude: specificExclusionList 
         });
         
-        const saveRes = await fetch(`https://localhost:44379/api/Party/save`, {
+        const saveRes = await fetch(`http://localhost:44379/api/Party/save`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: saveBody
@@ -1107,7 +1107,7 @@ async function startWalletCreation() {
     setStep(6, 'active');
     setModalStatus("Finalizing Wallet...");
     
-    const EndActivationRes = await fetch("https://localhost:44379" + '/api/Activation/end', {
+    const EndActivationRes = await fetch("http://localhost:44379" + '/api/Activation/end', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ partyID: partyId }) 
@@ -1186,7 +1186,7 @@ function bytesToBase64(bytes) {
 
 async function loadExistingWallets(selectAddress = null, fallbackParty = null) {
     try {
-        const res = await fetch('https://localhost:44379/api/Party');
+        const res = await fetch('http://localhost:44379/api/Party');
         const data = await res.json();
         cachedParties = data.resultObject || [];
 
@@ -1505,7 +1505,7 @@ if (btnSignTx) {
         pin: encryptedPin
       };
 
-      const signRes = await fetch('https://localhost:44379/api/Signature/sign', {
+      const signRes = await fetch('http://localhost:44379/api/Signature/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signSessionPayload)
@@ -1613,7 +1613,7 @@ async function cw2_handleDecodedText(decodedText, targetInputId) {
       setMainPrompt("⏳ Initializing Signing Session...");
 
       const createPayload = { partyGUID: wallet.partyId, messageToSign: messageToSign };
-      const createRes = await fetch('https://localhost:44379/api/Signature/create', {
+      const createRes = await fetch('http://localhost:44379/api/Signature/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createPayload)
