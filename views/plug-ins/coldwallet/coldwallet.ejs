@@ -509,7 +509,8 @@
       <div class="cw2-field-group mb-3">
           <label>Transaction Hash</label>
           <div style="display: flex; gap: 10px;">
-              <input type="text" id="tx-hash-display" class="form-control" placeholder="Waiting scan..." readonly>
+              <input type="text" id="tx-hash-display" class="form-control" placeholder="Waiting scan..." readonly style="flex: 1;">
+              <button id="btn-paste-tx" class="btn btn-outline-secondary" type="button" title="Paste from clipboard"><i class="fas fa-paste"></i></button>
               <button id="btn-scan-qr" class="btn btn-outline-primary cw2-scan-btn" type="button"><i class="fas fa-camera me-2"></i><span>Scan</span></button>
           </div>
       </div>
@@ -1672,12 +1673,57 @@ const scanModal = document.getElementById('scanQRModal');
 const btnCloseScan = document.getElementById('btn-close-scan');
 const btnScanRecipient = document.getElementById('btn-scan-recipient');
 const btnScanTxHash = document.getElementById('btn-scan-qr');
+const btnPasteTx = document.getElementById('btn-paste-tx');
 
 let cw2QrScanner = null;
 let cw2ScanTargetInput = null;
 
 // Worker configuration (required for Nimiq if not bundled)
 // QrScanner.WORKER_PATH = '/plug-ins/coldwallet/assets/js/qr-scanner-worker.min.js';
+
+/* PASTE HANDLER for Transaction Hash
+   ----------------------------------------------------------- */
+async function cw2_handlePaste() {
+  try {
+    const clipboardText = await navigator.clipboard.readText();
+    const trimmed = clipboardText.trim();
+    
+    if (!trimmed) {
+      alert('Clipboard is empty.');
+      return;
+    }
+
+    let jsonString = '';
+    
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(trimmed);
+      // If it's already valid JSON, use as-is
+      jsonString = trimmed;
+    } catch (jsonError) {
+      // Check if it's valid hex (case-insensitive, no 0x prefix)
+      const isHex = /^[0-9a-fA-F]+$/.test(trimmed);
+      
+      if (isHex) {
+        // Wrap as rawTxBytes JSON with messagesToSign array
+        jsonString = JSON.stringify({ 
+          rawTxBytes: trimmed,
+          messagesToSign: [trimmed]
+        });
+      } else {
+        alert('Invalid format. Expected JSON or hex string (e.g., "3F2B...").');
+        return;
+      }
+    }
+    
+    // Feed into existing handler
+    await cw2_handleDecodedText(jsonString, 'tx-hash-display');
+    
+  } catch (err) {
+    console.error('Paste error:', err);
+    alert('Failed to read clipboard. Please ensure clipboard permissions are granted.');
+  }
+}
 
 function cw2_openScanner(targetInputId) {
   cw2ScanTargetInput = document.getElementById(targetInputId);
@@ -1754,6 +1800,17 @@ if (btnCloseScan) btnCloseScan.addEventListener('click', cw2_closeScanner);
 
 if (btnScanRecipient) btnScanRecipient.addEventListener('click', () => cw2_openScanner('recipient-address'));
 if (btnScanTxHash) btnScanTxHash.addEventListener('click', () => cw2_openScanner('tx-hash-display'));
+
+// Paste button and onpaste handler for tx-hash-display
+if (btnPasteTx) btnPasteTx.addEventListener('click', cw2_handlePaste);
+// Paste button and onpaste handler for tx-hash-display
+if (btnPasteTx) btnPasteTx.addEventListener('click', cw2_handlePaste);
+if (txHashDisplay) {
+  txHashDisplay.addEventListener('paste', (e) => {
+    e.preventDefault();
+    cw2_handlePaste();
+  });
+}
 
 // Close by clicking outside
 scanModal?.addEventListener('click', (e) => {
