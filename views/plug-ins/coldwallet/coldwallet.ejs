@@ -1693,31 +1693,15 @@ async function cw2_handlePaste() {
       return;
     }
 
-    let jsonString = '';
-    
-    // Try to parse as JSON first
+    // Parse as JSON
     try {
       const parsed = JSON.parse(trimmed);
-      // If it's already valid JSON, use as-is
-      jsonString = trimmed;
+      // Feed into existing handler
+      await cw2_handleDecodedText(trimmed, 'tx-hash-display');
     } catch (jsonError) {
-      // Check if it's valid hex (case-insensitive, no 0x prefix)
-      const isHex = /^[0-9a-fA-F]+$/.test(trimmed);
-      
-      if (isHex) {
-        // Wrap as rawTxBytes JSON with messagesToSign array
-        jsonString = JSON.stringify({ 
-          rawTxBytes: trimmed,
-          messagesToSign: [trimmed]
-        });
-      } else {
-        alert('Invalid format. Expected JSON or hex string (e.g., "3F2B...").');
-        return;
-      }
+      alert('Invalid format. Expected valid JSON with rawTxBytes and messagesToSign fields.');
+      return;
     }
-    
-    // Feed into existing handler
-    await cw2_handleDecodedText(jsonString, 'tx-hash-display');
     
   } catch (err) {
     console.error('Paste error:', err);
