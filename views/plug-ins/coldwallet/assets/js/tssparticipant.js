@@ -7,6 +7,12 @@
  * Works in browsers (EJS templates) and Node (inject ws via opts.wsImpl).
  * No external deps.
  */
+const CHECKPIN_TIMEOUT = 300000;                // wrc increased
+const SENDSTATUS_TIMEOUT = 10000;               // wrc no change
+const STATUS_POLLING_INTERVAL = 5000;           // wrc no change
+const DEFAULT_ENROLL_WAITFOR_TIMEOUT = 300000;  // wrc increased  
+const SIGNATURE_TIMEOUT = 300000;               // wrc increased
+
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     define([], factory);
@@ -414,26 +420,26 @@ var decode = function (raw) {
         params,
         // eventi che sbloccano l'attesa del sign:
         ['SIGN_RESULT', 'SUCCESS.SIGNATURE_ADDED', 'SUCCESS.SIGNATURE_ENDED'],
-        120000
+        SIGNATURE_TIMEOUT
       );
       this.response = promise;
       return promise;
     };
 
   EnrollmentClient.prototype.sendStatus = function (params) { 
-    const promise =this._sendAndWait('Info_Enrollment', params, 'ENROLLMENT_STATUS', 10000);
+    const promise =this._sendAndWait('Info_Enrollment', params, 'ENROLLMENT_STATUS', SENDSTATUS_TIMEOUT);
     this.response = promise;
     return promise; 
   };
 
   EnrollmentClient.prototype.checkPIN = function (params) {
-      const promise = this._sendAndWait('CheckPIN', params, ['SUCCESS.PIN_SERIAL', 'ERROR.WRONG_PIN'], 10000);
+      const promise = this._sendAndWait('CheckPIN', params, ['SUCCESS.PIN_SERIAL', 'ERROR.WRONG_PIN'], CHECKPIN_TIMEOUT);
       this.response = promise;
       return promise;
   };
 
   EnrollmentClient.prototype.startStatusPolling = function (params, everyMs) {
-    if (everyMs == null) everyMs = 5000;
+    if (everyMs == null) everyMs = STATUS_POLLING_INTERVAL;
     this.stopStatusPolling();
     var self = this;
     this._statusTimer = setInterval(function () {
@@ -448,7 +454,7 @@ var decode = function (raw) {
   };
 
   EnrollmentClient.prototype.waitFor = function (predicate, cfg) {
-    cfg = cfg || {}; var timeoutMs = cfg.timeoutMs == null ? 120000 : cfg.timeoutMs;
+    cfg = cfg || {}; var timeoutMs = cfg.timeoutMs == null ? DEFAULT_ENROLL_WAITFOR_TIMEOUT : cfg.timeoutMs;
     var self = this;
     return new Promise(function (resolve, reject) {
       var to = setTimeout(function () { off(); reject(new Error('waitFor timeout')); }, timeoutMs);
