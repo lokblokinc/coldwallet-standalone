@@ -167,6 +167,14 @@
     margin: 0 auto;
   }
 
+  /* Constrain QR + PIN modal widths */
+  #customQRModal .custom-modal-content{
+    width: min(92vw, 640px);
+  }
+  #cw2SignPinModal .custom-modal-content{
+    width: min(92vw, 520px);
+  }
+
   /* Created success block: centered + modest (no Bootstrap alert styling) */
   #cw2-created-success{
     text-align: center;
@@ -428,6 +436,41 @@
     font-size: .9rem;
   }
 
+  /* Toasts (lightweight, local to this view) */
+  .cw2-toast-container{
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 10050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .cw2-toast{
+    min-width: 220px;
+    max-width: 360px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #1f2937;
+    color: #fff;
+    font-size: 0.9rem;
+    box-shadow: 0 10px 28px rgba(0,0,0,.2);
+    opacity: 0;
+    transform: translateY(6px);
+    animation: cw2ToastIn .18s ease-out forwards;
+  }
+  .cw2-toast.cw2-toast-info{ background: #1f2937; }
+  .cw2-toast.cw2-toast-success{ background: #198754; }
+  .cw2-toast.cw2-toast-error{ background: #dc3545; }
+
+  @keyframes cw2ToastIn{
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cw2ToastOut{
+    to { opacity: 0; transform: translateY(6px); }
+  }
+
 </style>
 
 <main class="container-panel">
@@ -530,6 +573,8 @@
 
 </main>
 
+<div class="cw2-toast-container" id="cw2-toast-container" aria-live="polite" aria-atomic="true"></div>
+
 <div id="cw2-addWallet" class="custom-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cw2-addWalletTitle">
   <div class="custom-modal-content" style="max-width: 600px;">
     <div class="cw2-modal-header">
@@ -628,7 +673,7 @@
 </div>
 
 <div id="customQRModal" class="custom-modal hidden">
-  <div class="custom-modal-content" style="max-width: 100%; text-align: center;">
+  <div class="custom-modal-content" style="text-align: center;">
     <div class="cw2-modal-header">
         <div class="cw2-modal-title" id="cw2-custom-qr-title">Wallet QR</div>
         <button class="close-icon-white" id="btn-close-custom-qr">&times;</button>
@@ -674,7 +719,7 @@
 
 
 <div id="cw2SignPinModal" class="custom-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cw2SignPinTitle">
-  <div class="custom-modal-content" style="max-width: 100%;">
+  <div class="custom-modal-content">
     <div class="cw2-modal-header">
       <div class="cw2-modal-title" id="cw2SignPinTitle">Enter PIN</div>
       <button class="close-icon-white" id="btn-close-sign-pin" aria-label="Close">&times;</button>
@@ -712,7 +757,9 @@
     }catch(e){}
   };
 </script>
-<script src="/js/coldwallet.js"></script>
+<!-- This did was not working!  the code seems to have been moved to coldwallet.ejs -->
+ <!-- This file belongs in assets/js not here and the full path is needed see other script cdn's -->
+<!--script src="/js/coldwallet.js"></script-->
 
 <script type="module">
 /* -----------------------------------------------------------
@@ -998,7 +1045,7 @@ async function startWalletCreation() {
             if(i == 0) {
               cw2_setStatusMessage(`Using inserted ${member.name}, do not remove.`, 'info');
             } else {
-              cw2_setStatusMessage(`Tap or insert ${member.name} to authorize...`, 'info');
+              cw2_setStatusMessage(`Tap or insert ${member.name}, wrong device is ignored`, 'info');
             }
             
             // Send current exclusion list
@@ -1147,24 +1194,23 @@ async function startWalletCreation() {
     btnCancelCreate.disabled = false;
     btnStartCeremony.classList.add('d-none');
 
-    const walletSelect = document.getElementById('existing-wallets');
-    const opt = document.createElement('option');
-    opt.value = finalAddr;
-    const shortAddr = finalAddr.length > 12 
-        ? finalAddr.substring(0, 12) + '...' 
-        : finalAddr;
-
-    const namePrefix = walletName ? `${walletName} — ` : '';
-    opt.textContent = `${namePrefix}${shortAddr} (${selectedAsset})`;
-
-    opt.dataset.partyId = partyId;
-    opt.dataset.asset = selectedAsset;
-    opt.dataset.walletName = walletName;
-    opt.selected = true;
-    walletSelect.appendChild(opt);
-    
+    // Update the main interface with the new wallet details
     updateMainInterface(finalAddr, selectedAsset, walletName);
-    loadExistingWallets(); 
+    
+    // Create fallback party object in case API hasn't updated yet
+    // This ensures the wallet appears in the list even if there's a slight delay
+    const fallbackParty = {
+        partyAddress: finalAddr,
+        assetCode: selectedAsset,
+        walletName: walletName,
+        id: partyId,
+        partyGUID: partyId,
+        members: wallet.participants || members
+    };
+    
+    // Reload wallet list and select the newly created wallet
+    // This properly selects the wallet in the dropdown after creation
+    loadExistingWallets(finalAddr, fallbackParty); 
 
   } catch (e) {
     console.error(e);
@@ -1248,8 +1294,14 @@ async function loadExistingWallets(selectAddress = null, fallbackParty = null) {
             // Force UI refresh
             select.dispatchEvent(new Event('change'));
         } else {
-            select.value = '';
-            updateCreateButtonState();
+            // Auto-select the last wallet (most recent) if available
+            if (cachedParties.length > 0 && cachedParties[cachedParties.length - 1].partyAddress) {
+                select.value = cachedParties[cachedParties.length - 1].partyAddress;
+                select.dispatchEvent(new Event('change'));
+            } else {
+                select.value = '';
+                updateCreateButtonState();
+            }
         }
     } catch (e) { 
         console.error("Error loading wallets", e); 
@@ -1524,7 +1576,7 @@ if (btnSignTx) {
       return;
     }
 
-    setMainPrompt(`Insert the PIN for ${signerText}`);
+    setMainPrompt(`Enter the PIN for ${signerText}`);
     const pin = await openSignPin(signerText);
     if (!pin) {
       setMainPrompt("Operation cancelled (No PIN entered).");
@@ -1536,7 +1588,7 @@ if (btnSignTx) {
     const originalText = btnSignTx.textContent;
     btnSignTx.disabled = true;
     btnSignTx.textContent = 'Signing...';
-    setMainPrompt(`⏳ Tap or insert your ${signerText} to sign.`);
+    setMainPrompt(`⏳ Waiting for ${signerText} (wrong device ignored).`);
 
     try {
       const signSessionPayload = {
@@ -1709,32 +1761,49 @@ let cw2ScanTargetInput = null;
 // Worker configuration (required for Nimiq if not bundled)
 // QrScanner.WORKER_PATH = '/plug-ins/coldwallet/assets/js/qr-scanner-worker.min.js';
 
-/* PASTE HANDLER for Transaction Hash
+/* PASTE HANDLERS for Transaction Hash
    ----------------------------------------------------------- */
-async function cw2_handlePaste() {
-  try {
-    const clipboardText = await navigator.clipboard.readText();
-    const trimmed = clipboardText.trim();
-    
-    if (!trimmed) {
-      alert('Clipboard is empty.');
-      return;
-    }
+function cw2_showToast(message, type = 'info') {
+  const container = document.getElementById('cw2-toast-container');
+  if (!container) return;
 
-    // Parse as JSON
-    try {
-      const parsed = JSON.parse(trimmed);
-      // Feed into existing handler
-      await cw2_handleDecodedText(trimmed, 'tx-hash-display');
-    } catch (jsonError) {
-      alert('Invalid format. Expected valid JSON with rawTxBytes and messagesToSign fields.');
-      return;
-    }
-    
-  } catch (err) {
-    console.error('Paste error:', err);
-    alert('Failed to read clipboard. Please ensure clipboard permissions are granted.');
+  const toast = document.createElement('div');
+  toast.className = `cw2-toast cw2-toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'cw2ToastOut .18s ease-in forwards';
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 200);
+  }, 3500);
+}
+
+function cw2_focusPasteTarget() {
+  if (txHashDisplay) {
+    txHashDisplay.focus();
+    txHashDisplay.select();
   }
+}
+
+async function cw2_handlePaste() {
+  const clipboardText = await navigator.clipboard.readText();
+  const trimmed = clipboardText.trim();
+  
+  if (!trimmed) {
+    throw new Error('Clipboard is empty.');
+  }
+
+  // Parse as JSON
+  try {
+    JSON.parse(trimmed);
+  } catch (jsonError) {
+    throw new Error('Invalid format. Expected valid JSON with rawTxBytes and messagesToSign fields.');
+  }
+
+  // Feed into existing handler
+  await cw2_handleDecodedText(trimmed, 'tx-hash-display');
 }
 
 function cw2_openScanner(targetInputId) {
@@ -1814,13 +1883,25 @@ if (btnScanRecipient) btnScanRecipient.addEventListener('click', () => cw2_openS
 if (btnScanTxHash) btnScanTxHash.addEventListener('click', () => cw2_openScanner('tx-hash-display'));
 
 // Paste button and onpaste handler for tx-hash-display
-if (btnPasteTx) btnPasteTx.addEventListener('click', cw2_handlePaste);
-// Paste button and onpaste handler for tx-hash-display
-if (btnPasteTx) btnPasteTx.addEventListener('click', cw2_handlePaste);
+if (btnPasteTx) {
+  btnPasteTx.addEventListener('click', async () => {
+    try {
+      await cw2_handlePaste();
+    } catch (err) {
+      console.error('Paste error:', err);
+      cw2_showToast(err?.message || 'Paste failed. Use Ctrl+V in the field.', 'error');
+      cw2_focusPasteTarget();
+      setMainPrompt('Click the field and press Ctrl+V to paste the transaction JSON.');
+    }
+  });
+}
 if (txHashDisplay) {
   txHashDisplay.addEventListener('paste', (e) => {
     e.preventDefault();
-    cw2_handlePaste();
+    cw2_handlePaste().catch((err) => {
+      console.error('Paste error:', err);
+      cw2_showToast(err?.message || 'Paste failed. Use Ctrl+V in the field.', 'error');
+    });
   });
 }
 

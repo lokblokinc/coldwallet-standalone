@@ -1,3 +1,4 @@
+// This code appears to have been moved to coldwallet.ejs
 (function(){
   // ===== Local store for created wallets =====
   const LOCAL_KEY = 'cold_wallets_v1';
